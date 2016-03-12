@@ -166,6 +166,9 @@ up.link = (($) ->
     $link = $(linkOrSelector)
 
     options = u.options(options)
+
+    console.debug("--- Following link %o (preload = %o) ---", $link.get(), options.preload)
+
     url = u.option($link.attr('up-href'), $link.attr('href'))
     target = u.option(options.target, $link.attr('up-target'), 'body')
     options.failTarget = u.option(options.failTarget, $link.attr('up-fail-target'), 'body')

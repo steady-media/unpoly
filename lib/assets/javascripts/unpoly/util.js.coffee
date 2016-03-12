@@ -901,16 +901,16 @@ up.util = (($) ->
     $element.css(lastFrame)
     deferred.then(withoutCompositing)
     deferred.then(withoutTransition)
-    $element.data(ANIMATION_PROMISE_KEY, deferred)
-    deferred.then(-> $element.removeData(ANIMATION_PROMISE_KEY))
-    endTimeout = setTimeout((-> deferred.resolve()), opts.duration + opts.delay)
+    $element.data(ANIMATION_DEFERRED_KEY, deferred)
+    deferred.then(-> $element.removeData(ANIMATION_DEFERRED_KEY))
+    endTimeout = setTimeout((-> console.debug("RESOLVING BY TIMEOUT!"); deferred.resolve()), opts.duration + opts.delay)
     deferred.then(-> clearTimeout(endTimeout)) # clean up in case we're canceled
     # Return the whole deferred and not just return a thenable.
     # Other code will need the possibility to cancel the animation
     # by resolving the deferred.
     deferred
 
-  ANIMATION_PROMISE_KEY = 'up-animation-promise'
+  ANIMATION_DEFERRED_KEY = 'up-animation-deferred'
 
   ###*
   Completes the animation for  the given element by jumping
@@ -926,9 +926,13 @@ up.util = (($) ->
   @internal
   ###
   finishCssAnimate = (elementOrSelector) ->
+    console.debug("Checking if there's anything to finish on %o", elementOrSelector)
     $(elementOrSelector).each ->
-      if existingAnimation = $(this).data(ANIMATION_PROMISE_KEY)
+      if existingAnimation = $(this).data(ANIMATION_DEFERRED_KEY)
+        console.debug("***** FINISHING CSS animate on %o", $(this).get())
         existingAnimation.resolve()
+      else
+        console.debug("Nothing to finish on %o", $(this).get())
 
   ###*
   Measures the given element.
@@ -1161,8 +1165,16 @@ up.util = (($) ->
   ###
   resolvableWhen = (deferreds...) ->
     joined = $.when(deferreds...)
+    window.resolveCount = 0 if isMissing(window.resolveCount)
+    resolveCalled = false
+    # joined = {}
     joined.resolve = ->
-      each deferreds, (deferred) -> deferred.resolve?()
+      unless resolveCalled
+        if window.resolveCount < 5
+          console.debug("Joined resolution of %o", deferreds)
+        window.resolveCount += 1
+        each deferreds, (deferred) -> deferred.resolve?()
+        resolveCalled = true
     joined
 
 #  resolvableSequence = (first, callbacks...) ->
