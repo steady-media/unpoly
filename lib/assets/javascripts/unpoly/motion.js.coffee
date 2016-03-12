@@ -152,7 +152,9 @@ up.motion = (($) ->
   ###
   animate = (elementOrSelector, animation, options) ->
     $element = $(elementOrSelector)
+    console.group('animate on %o (%o)', $element.get(0).className, animation)
     finish($element)
+    console.groupEnd()
     options = animateOptions(options)
     if animation == 'none' || animation == false
       none()
@@ -203,8 +205,8 @@ up.motion = (($) ->
     u.temporaryCss $new, display: 'none', ->
       # Within this block, $new is hidden but $old is visible
       oldCopy = prependCopy($old, $viewport)
-      oldCopy.$ghost.addClass('up-destroying')
-      oldCopy.$bounds.addClass('up-destroying')
+      oldCopy.$ghost.addClass('up-old-morphing')
+      oldCopy.$bounds.addClass('up-old-morphing')
       # Remember the previous scroll position in case we will reveal $new below.
       oldScrollTop = $viewport.scrollTop()
       # $viewport.scrollTop(oldScrollTop + 1)
@@ -264,14 +266,16 @@ up.motion = (($) ->
   @stable
   ###
   finish = (elementOrSelector) ->
+    console.group('up.motion.finish on %o', elementOrSelector)
     $element = $(elementOrSelector)
     u.finishCssAnimate($element)
     finishGhosting($element)
+    console.groupEnd()
   
   finishGhosting = ($collection) ->
     $collection.each ->
       $element = $(this)
-      if existingGhosting = $element.data(GHOSTING_DEFERRED_KEY)
+      if existingGhosting = u.pluckData($element, GHOSTING_DEFERRED_KEY)
         up.puts('Canceling existing ghosting on %o', $element)
         existingGhosting.resolve?()
       
@@ -354,14 +358,16 @@ up.motion = (($) ->
     ensureMorphable($old, transitionOrName)
     ensureMorphable($new, transitionOrName)
 
-    up.log.group ('Morphing %o to %o (using %o)' if transitionOrName), source.get(0), target.get(0), transitionOrName, ->
+    up.log.group ('Morphing %o to %o (using %o)' if transitionOrName), source.get(0).className, target.get(0).className, transitionOrName, ->
 
       parsedOptions = u.only(options, 'reveal', 'restoreScroll', 'source')
       parsedOptions = u.extend(parsedOptions, animateOptions(options))
 
       if isEnabled()
+        console.groupCollapsed('Finishing animations before morph')
         finish($old)
         finish($new)
+        console.groupEnd()
 
         if !transitionOrName
           return skipMorph($old, $new, parsedOptions)
@@ -662,10 +668,13 @@ up.motion = (($) ->
   )
 
   transition('cross-fade', ($old, $new, options) ->
-    resolvableWhen(
+    console.group('running cross-fade transition from %o to %o', $old.get(), $new.get())
+    deferred = resolvableWhen(
       animate($old, 'fade-out', options),
       animate($new, 'fade-in', options)
     )
+    console.groupEnd()
+    deferred
   )
   
   up.on 'up:framework:boot', snapshot

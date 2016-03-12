@@ -883,6 +883,7 @@ up.util = (($) ->
   ###
   cssAnimate = (elementOrSelector, lastFrame, opts) ->
     $element = $(elementOrSelector)
+    console.debug('cssAnimate on %o', $element.get())
     opts = options(opts,
       duration: 300,
       delay: 0,
@@ -926,13 +927,13 @@ up.util = (($) ->
   @internal
   ###
   finishCssAnimate = (elementOrSelector) ->
-    console.debug("Checking if there's anything to finish on %o", elementOrSelector)
+    console.debug("finishCssAnimate: Checking if there's anything to finish on %o", elementOrSelector)
     $(elementOrSelector).each ->
-      if existingAnimation = $(this).data(ANIMATION_DEFERRED_KEY)
-        console.debug("***** FINISHING CSS animate on %o", $(this).get())
+      if existingAnimation = pluckData(this, ANIMATION_DEFERRED_KEY)
+        console.debug("finishCssAnimate: ***** FINISHING CSS animate on %o", $(this).get())
         existingAnimation.resolve()
       else
-        console.debug("Nothing to finish on %o", $(this).get())
+        console.debug("finishCssAnimate: Nothing to finish on %o", $(this).get())
 
   ###*
   Measures the given element.
@@ -1164,17 +1165,11 @@ up.util = (($) ->
   @internal
   ###
   resolvableWhen = (deferreds...) ->
-    joined = $.when(deferreds...)
-    window.resolveCount = 0 if isMissing(window.resolveCount)
-    resolveCalled = false
-    # joined = {}
-    joined.resolve = ->
-      unless resolveCalled
-        if window.resolveCount < 5
-          console.debug("Joined resolution of %o", deferreds)
-        window.resolveCount += 1
-        each deferreds, (deferred) -> deferred.resolve?()
-        resolveCalled = true
+    joined = $.when(resolvedPromise(), deferreds...)
+    joined.resolve = memoize(->
+      each deferreds, (deferred) ->
+        deferred.resolve()
+    )
     joined
 
 #  resolvableSequence = (first, callbacks...) ->
@@ -1512,6 +1507,12 @@ up.util = (($) ->
     $error.text(asString)
     throw new Error(asString)
 
+  pluckData = (elementOrSelector, key) ->
+    $element = $(elementOrSelector)
+    value = $element.data(key)
+    $element.removeData(key)
+    value
+
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
   offsetParent: offsetParent
@@ -1599,6 +1600,7 @@ up.util = (($) ->
   unwrapElement: unwrapElement
   multiSelector: multiSelector
   error: error
+  pluckData: pluckData
 
 )($)
 

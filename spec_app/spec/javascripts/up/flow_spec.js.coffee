@@ -457,6 +457,50 @@ describe 'up.flow', ->
         expect($(elements.get(0)).text()).toEqual('text')
         expect($(elements.get(1)).text()).toEqual('')
 
+      describe 'with { transition } option', ->
+
+        it 'morphs between the old and new element', (done) ->
+          affix('.element').text('version 1')
+          up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 50)
+
+          $ghost1 = $('.element.up-ghost:contains("version 1")')
+          expect($ghost1).toHaveLength(1)
+          expect($ghost1.css('opacity')).toBeAround(1.0, 0.1)
+
+          $ghost2 = $('.element.up-ghost:contains("version 2")')
+          expect($ghost2).toHaveLength(1)
+          expect($ghost2.css('opacity')).toBeAround(0.0, 0.1)
+
+          @setTimer 40, ->
+            expect($ghost1.css('opacity')).toBeAround(0.0, 0.2)
+            expect($ghost2.css('opacity')).toBeAround(1.0, 0.2)
+            done()
+
+        it 'cancels an existing transition by instantly jumping to the last frame', ->
+          affix('.element').text('version 1')
+          up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 200)
+
+          $ghost1 = $('.element.up-ghost:contains("version 1")')
+          expect($ghost1).toHaveLength(1)
+          expect($ghost1.css('opacity')).toBeAround(1.0, 0.1)
+
+          $ghost2 = $('.element.up-ghost:contains("version 2")')
+          expect($ghost2).toHaveLength(1)
+          expect($ghost2.css('opacity')).toBeAround(0.0, 0.1)
+
+          up.extract('.element', '<div class="element">version 3</div>', transition: 'cross-fade', duration: 200)
+
+          $ghost1 = $('.element.up-ghost:contains("version 1")')
+          expect($ghost1).toHaveLength(0)
+
+          $ghost2 = $('.element.up-ghost:contains("version 2")')
+          expect($ghost2).toHaveLength(1)
+          expect($ghost2.css('opacity')).toBeAround(1.0, 0.1)
+
+          $ghost3 = $('.element.up-ghost:contains("version 3")')
+          expect($ghost3).toHaveLength(1)
+          expect($ghost3.css('opacity')).toBeAround(0.0, 0.1)
+
       describe 'handling of [up-keep] elements', ->
 
         squish = (string) ->
@@ -508,8 +552,6 @@ describe 'up.flow', ->
             affix('.keeper[up-keep]').text('old-inside')
             up.extract '.keeper', "<div class='keeper' up-keep>new-inside</div>"
             expect($('.keeper')).toHaveText('old-inside')
-
-          it "does not compile the kept element a second time"
 
           it "only emits an event up:fragment:kept, but not an event up:fragment:inserted", ->
             insertedListener = jasmine.createSpy('subscriber to up:fragment:inserted')
