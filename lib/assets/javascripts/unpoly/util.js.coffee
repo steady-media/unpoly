@@ -1165,7 +1165,7 @@ up.util = (($) ->
   @internal
   ###
   resolvableWhen = (deferreds...) ->
-    joined = $.when(resolvedPromise(), deferreds...)
+    joined = $.when(resolvedDeferred(), deferreds...)
     joined.resolve = memoize(->
       each deferreds, (deferred) ->
         deferred.resolve()

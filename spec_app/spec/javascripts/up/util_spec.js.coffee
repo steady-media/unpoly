@@ -304,21 +304,23 @@ describe 'up.util', ->
 
         expect(oneDeferred.resolve.calls.count()).toEqual(1)
 
-      it 'does not re-use the given deferred if only one deferred is given (bugfix against troublesome jQuery optimization)', ->
-        one = jasmine.createSpy()
-        both = jasmine.createSpy()
-        oneDeferred = $.Deferred()
-        oneDeferred.then(one)
+      describe 'bugfix against troublesome jQuery optimization if only one deferred is given', ->
 
-        anotherLink = jasmine.createSpy()
-        anotherLink = jasmine.createSpy()
+        it 'does not simply return the given deferred', ->
+          oneDeferred = $.Deferred()
+          whenDeferred = up.util.resolvableWhen(oneDeferred)
+          # This is what $.when returns if only passed a single argument
+          expect(whenDeferred).not.toBe(oneDeferred.promise())
+          # Cover eventual implementations
+          expect(whenDeferred).not.toBe(oneDeferred)
+          expect(whenDeferred.promise()).not.toBe(oneDeferred.promise())
+          expect(whenDeferred.promise()).not.toBe(oneDeferred)
 
-        bothDeferred = up.util.resolvableWhen(oneDeferred)
-        bothDeferred.then(anotherLink)
-
-        oneDeferred.resolve()
-        expect(anotherLink).not.toHaveBeenCalled()
-
+        it 'does not create an infinite loop if the given deferred is nested twice and the first nesting is resolved', ->
+          oneDeferred = $.Deferred()
+          firstNesting = up.util.resolvableWhen(oneDeferred)
+          secondNesting = up.util.resolvableWhen(firstNesting)
+          firstNesting.resolve()
 
     describe 'up.util.requestDataAsArray', ->
 
