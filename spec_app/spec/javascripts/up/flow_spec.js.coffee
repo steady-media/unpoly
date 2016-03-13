@@ -32,11 +32,20 @@ describe 'up.flow', ->
             expect($('.after')).toHaveText('old-after')
             done()
 
-        it 'sends an X-Up-Target HTTP headers along with the request', ->
+        it 'sends an X-Up-Target HTTP header along with the request', ->
           up.replace('.middle', '/path')
           request = @lastRequest()
-          console.log(request.requestHeaders)
           expect(request.requestHeaders['X-Up-Target']).toEqual('.middle')
+
+        it 'returns a promise that will be resolved once the server response was received and the fragments were swapped', ->
+          resolution = jasmine.createSpy()
+          promise = up.replace('.middle', '/path')
+          promise.then(resolution)
+          expect(resolution).not.toHaveBeenCalled()
+          expect($('.middle')).toHaveText('old-middle')
+          @respond()
+          expect(resolution).toHaveBeenCalled()
+          expect($('.middle')).toHaveText('new-middle')
 
         describe 'with { data } option', ->
 
@@ -500,6 +509,16 @@ describe 'up.flow', ->
           $ghost3 = $('.element.up-ghost:contains("version 3")')
           expect($ghost3).toHaveLength(1)
           expect($ghost3.css('opacity')).toBeAround(0.0, 0.1)
+
+        it 'delays the resolution of the returned promise until the transition is over', (done) ->
+          affix('.element').text('version 1')
+          resolution = jasmine.createSpy()
+          promise = up.extract('.element', '<div class="element">version 2</div>', transition: 'cross-fade', duration: 30)
+          promise.then(resolution)
+          expect(resolution).not.toHaveBeenCalled()
+          @setTimer 50, ->
+            expect(resolution).toHaveBeenCalled()
+            done()
 
       describe 'handling of [up-keep] elements', ->
 
