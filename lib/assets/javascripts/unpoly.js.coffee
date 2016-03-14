@@ -8,7 +8,7 @@
 #= require unpoly/layout
 #= require unpoly/flow
 #= require unpoly/motion
-#= require unpoly/proxy
+#= require unpoly/net
 #= require unpoly/link
 #= require unpoly/form
 #= require unpoly/popup

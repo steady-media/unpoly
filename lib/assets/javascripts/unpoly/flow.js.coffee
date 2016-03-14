@@ -163,7 +163,7 @@ up.flow = (($) ->
     will be reset to the last known top position before a previous
     history change for the current URL.
   @param {Boolean} [options.cache]
-    Whether to use a [cached response](/up.proxy) if available.
+    Whether to use a [cached response](/up.net) if available.
   @param {Element|jQuery} [options.origin]
     The element that triggered the replacement. The element's selector will
     be substituted for the `&` shorthand in the target selector.
@@ -226,7 +226,7 @@ up.flow = (($) ->
           url: url
           method: u.methodFromXhr(xhr)
           target: selector
-        up.proxy.alias(request, newRequest)
+        up.net.alias(request, newRequest)
     else if isReloadable
       if query = u.requestDataAsQuery(options.data)
         url = "#{url}?#{query}"

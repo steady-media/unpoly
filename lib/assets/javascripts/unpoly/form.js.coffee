@@ -527,9 +527,9 @@ up.form = (($) ->
   The `<form>` element will be assigned a CSS class `up-active` while
   the submission is loading.
 
-  You can also [implement a spinner](/up.proxy/#spinners)
-  by [listening](/up.on) to the [`up:proxy:slow`](/up:proxy:slow)
-  and [`up:proxy:recover`](/up:proxy:recover) events.
+  You can also [implement a spinner](/up.net/#spinners)
+  by [listening](/up.on) to the [`up:net:slow`](/up:net:slow)
+  and [`up:net:recover`](/up:net:recover) events.
 
   @selector form[up-target]
   @param {String} up-target

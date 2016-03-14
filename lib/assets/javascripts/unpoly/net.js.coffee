@@ -3,8 +3,8 @@ Caching and preloading
 ======================
 
 All HTTP requests go through the Unpoly proxy.
-It caches a [limited](/up.proxy.config) number of server responses
-for a [limited](/up.proxy.config) amount of time,
+It caches a [limited](/up.net.config) number of server responses
+for a [limited](/up.net.config) amount of time,
 making requests to these URLs return insantly.
   
 The cache is cleared whenever the user makes a non-`GET` request
@@ -18,8 +18,8 @@ the user performs the click.
 Spinners
 --------
 
-You can [listen](/up.on) to the [`up:proxy:slow`](/up:proxy:slow)
-and [`up:proxy:recover`](/up:proxy:recover) events  to implement a spinner
+You can [listen](/up.on) to the [`up:net:slow`](/up:net:slow)
+and [`up:net:recover`](/up:net:recover) events  to implement a spinner
 that appears during a long-running request,
 and disappears once the response has been received:
 
@@ -32,8 +32,8 @@ Here is the Javascript to make it alive:
       show = function() { $element.show() };
       hide = function() { $element.hide() };
 
-      showOff = up.on('up:proxy:slow', show);
-      hideOff = up.on('up:proxy:recover', hide);
+      showOff = up.on('up:net:slow', show);
+      hideOff = up.on('up:net:recover', hide);
 
       hide();
 
@@ -45,15 +45,15 @@ Here is the Javascript to make it alive:
 
     });
 
-The `up:proxy:slow` event will be emitted after a delay of 300 ms
+The `up:net:slow` event will be emitted after a delay of 300 ms
 to prevent the spinner from flickering on and off.
-You can change (or remove) this delay by [configuring `up.proxy`](/up.proxy.config) like this:
+You can change (or remove) this delay by [configuring `up.net`](/up.net.config) like this:
 
-    up.proxy.config.slowDelay = 150;
+    up.net.config.slowDelay = 150;
 
-@class up.proxy  
+@class up.net
 ###
-up.proxy = (($) ->
+up.net = (($) ->
 
   u = up.util
 
@@ -66,7 +66,7 @@ up.proxy = (($) ->
   queuedRequests = []
 
   ###*
-  @property up.proxy.config
+  @property up.net.config
   @param {Number} [config.preloadDelay=75]
     The number of milliseconds to wait before [`[up-preload]`](/up-preload)
     starts preloading.
@@ -77,7 +77,7 @@ up.proxy = (($) ->
     The number of milliseconds until a cache entry expires.
     Defaults to 5 minutes.
   @param {Number} [config.slowDelay=300]
-    How long the proxy waits until emitting the [`up:proxy:slow` event](/up:proxy:slow).
+    How long the proxy waits until emitting the [`up:net:slow` event](/up:net:slow).
     Use this to prevent flickering of spinners.
   @param {Number} [config.maxRequests=4]
     The maximum number of concurrent requests to allow before additional
@@ -122,14 +122,14 @@ up.proxy = (($) ->
     size: -> config.cacheSize
     expiry: -> config.cacheExpiry
     key: cacheKey
-    # log: 'up.proxy'
+    # log: 'up.net'
 
   ###*
   Returns a cached response for the given request.
 
   Returns `undefined` if the given request is not currently cached.
 
-  @function up.proxy.get
+  @function up.net.get
   @return {Promise}
     A promise for the response that is API-compatible with the
     promise returned by [`jQuery.ajax`](http://api.jquery.com/jquery.ajax/).
@@ -151,7 +151,7 @@ up.proxy = (($) ->
   ###*
   Manually stores a promise for the response to the given request.
 
-  @function up.proxy.set
+  @function up.net.set
   @param {String} request.url
   @param {String} [request.method='GET']
   @param {String} [request.target='body']
@@ -165,10 +165,10 @@ up.proxy = (($) ->
   ###*
   Manually removes the given request from the cache.
 
-  You can also [configure](/up.proxy.config) when the proxy
+  You can also [configure](/up.net.config) when the proxy
   automatically removes cache entries.
 
-  @function up.proxy.remove
+  @function up.net.remove
   @param {String} request.url
   @param {String} [request.method='GET']
   @param {String} [request.target='body']
@@ -182,7 +182,7 @@ up.proxy = (($) ->
   Unpoly also automatically clears the cache whenever it processes
   a request with a non-GET HTTP method.
 
-  @function up.proxy.clear
+  @function up.net.clear
   @stable
   ###
   clear = cache.clear
@@ -227,8 +227,8 @@ up.proxy = (($) ->
   are considered to be read-only.
 
   If a network connection is attempted, the proxy will emit
-  a `up:proxy:load` event with the `request` as its argument.
-  Once the response is received, a `up:proxy:receive` event will
+  a `up:net:load` event with the `request` as its argument.
+  Once the response is received, a `up:net:receive` event will
   be emitted.
   
   @function up.ajax
@@ -283,11 +283,11 @@ up.proxy = (($) ->
       # following case:
       #
       # - User starts preloading a request.
-      #   This triggers *no* `up:proxy:slow`.
+      #   This triggers *no* `up:net:slow`.
       # - User starts loading the request (without preloading).
-      #   This triggers `up:proxy:slow`.
+      #   This triggers `up:net:slow`.
       # - The request finishes.
-      #   This triggers `up:proxy:recover`.
+      #   This triggers `up:net:recover`.
       loadStarted()
       promise.always(loadEnded)
 
@@ -299,7 +299,7 @@ up.proxy = (($) ->
   Returns `true` if the proxy is not currently waiting
   for a request to finish. Returns `false` otherwise.
 
-  @function up.proxy.isIdle
+  @function up.net.isIdle
   @return {Boolean}
     Whether the proxy is idle
   @experimental
@@ -311,7 +311,7 @@ up.proxy = (($) ->
   Returns `true` if the proxy is currently waiting
   for a request to finish. Returns `false` otherwise.
 
-  @function up.proxy.isBusy
+  @function up.net.isBusy
   @return {Boolean}
     Whether the proxy is busy
   @experimental
@@ -323,11 +323,11 @@ up.proxy = (($) ->
     wasIdle = isIdle()
     pendingCount += 1
     if wasIdle
-      # Since the emission of up:proxy:slow might be delayed by config.slowDelay,
+      # Since the emission of up:net:slow might be delayed by config.slowDelay,
       # we wrap the mission in a function for scheduling below.
       emission = ->
         if isBusy() # a fast response might have beaten the delay
-          up.emit('up:proxy:slow', message: 'Proxy is busy')
+          up.emit('up:net:slow', message: 'Proxy is busy')
           slowEventEmitted = true
       if config.slowDelay > 0
         slowDelayTimer = setTimeout(emission, config.slowDelay)
@@ -339,31 +339,31 @@ up.proxy = (($) ->
   are taking long to finish.
 
   By default Unpoly will wait 300 ms for an AJAX request to finish
-  before emitting `up:proxy:slow`. You can configure this time like this:
+  before emitting `up:net:slow`. You can configure this time like this:
 
-      up.proxy.config.slowDelay = 150;
+      up.net.config.slowDelay = 150;
 
-  Once all responses have been received, an [`up:proxy:recover`](/up:proxy:recover)
+  Once all responses have been received, an [`up:net:recover`](/up:net:recover)
   will be emitted.
 
   Note that if additional requests are made while Unpoly is already busy
-  waiting, **no** additional `up:proxy:slow` events will be triggered.
+  waiting, **no** additional `up:net:slow` events will be triggered.
 
-  @event up:proxy:slow
+  @event up:net:slow
   @stable
   ###
 
   loadEnded = ->
     pendingCount -= 1
     if isIdle() && slowEventEmitted
-      up.emit('up:proxy:recover', message: 'Proxy is idle')
+      up.emit('up:net:recover', message: 'Proxy is idle')
       slowEventEmitted = false
 
   ###*
   This event is [emitted]/(up.emit) when [AJAX requests](/up.ajax)
-  have [taken long to finish](/up:proxy:slow), but have finished now.
+  have [taken long to finish](/up:net:slow), but have finished now.
 
-  @event up:proxy:recover
+  @event up:net:recover
   @stable
   ###
 
@@ -383,7 +383,7 @@ up.proxy = (($) ->
     deferred.promise()
 
   load = (request) ->
-    up.emit('up:proxy:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
+    up.emit('up:net:load', u.merge(request, message: ['Loading %s %s', request.method, request.url]))
 
     # We will modify the request below for features like method wrapping.
     # Let's not change the original request which would confuse API clients
@@ -407,7 +407,7 @@ up.proxy = (($) ->
     promise
 
   responseReceived = (request, xhr) ->
-    up.emit('up:proxy:received', u.merge(request, message: ['Server responded with %s %s (%d bytes)', xhr.status, xhr.statusText, xhr.responseText?.length]))
+    up.emit('up:net:received', u.merge(request, message: ['Server responded with %s %s (%d bytes)', xhr.status, xhr.statusText, xhr.responseText?.length]))
     pokeQueue()
 
   pokeQueue = ->
@@ -420,7 +420,7 @@ up.proxy = (($) ->
   This event is [emitted]/(up.emit) before an [AJAX request](/up.ajax)
   is starting to load.
 
-  @event up:proxy:load
+  @event up:net:load
   @param event.url
   @param event.method
   @param event.target
@@ -431,7 +431,7 @@ up.proxy = (($) ->
   This event is [emitted]/(up.emit) when the response to an [AJAX request](/up.ajax)
   has been received.
 
-  @event up:proxy:received
+  @event up:net:received
   @param event.url
   @param event.method
   @param event.target
@@ -456,7 +456,7 @@ up.proxy = (($) ->
     preloadDelayTimer = setTimeout(block, delay)
 
   ###*
-  @function up.proxy.preload
+  @function up.net.preload
   @param {String|Element|jQuery}
     The element whose destination should be preloaded.
   @return
@@ -508,8 +508,8 @@ up.proxy = (($) ->
   isIdle: isIdle
   isBusy: isBusy
   config: config
-  defaults: -> u.error('up.proxy.defaults(...) no longer exists. Set values on he up.proxy.config property instead.')
+  defaults: -> u.error('up.net.defaults(...) no longer exists. Set values on he up.net.config property instead.')
   
 )(jQuery)
 
-up.ajax = up.proxy.ajax
+up.ajax = up.net.ajax

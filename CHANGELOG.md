@@ -17,10 +17,10 @@ Unreleased
 
 ### Breaking changes
 
-- `up.proxy.idle()` is now [`up.proxy.isIdle()`](/up.proxy.isIdle)
-- `up.proxy.busy()` is now [`up.proxy.isBusy()`](/up.proxy.isBusy)
-- Event `up:proxy:busy` is now [`up:proxy:slow`](/up:proxy:slow)
-- Event `up:proxy:idle` is now [`up:proxy:idle`](/up:proxy:recover)
+- `up.net.idle()` is now [`up.net.isIdle()`](/up.net.isIdle)
+- `up.net.busy()` is now [`up.net.isBusy()`](/up.net.isBusy)
+- Event `up:net:busy` is now [`up:net:slow`](/up:net:slow)
+- Event `up:net:idle` is now [`up:net:idle`](/up:net:recover)
 
 
 0.21.0
@@ -64,7 +64,7 @@ Unreleased
 ### Compatible changes
 
 - Elements can now be persisted during page updates using the [`up-keep`](/up-keep) attribute.
-- `up.proxy.ajax` is now available as [`up.ajax`](/up.ajax).
+- `up.net.ajax` is now available as [`up.ajax`](/up.ajax).
 - `up.ajax` can now handle nested objects as `{ data }` option (used to pass form parameters).
 
 ### Breaking changes
@@ -91,7 +91,7 @@ Unreleased
 - New function [`up.off`](/up.off). This unregisters an event listener previously bound with [`up.on`](/up.on).
 - If a container contains more than one link, you can now set the value of the [`up-expand`](/up-expand)
   attribute to a CSS selector to define which link should be expanded.
-- You can now configure a list of idempotent HTTP methods in [`up.proxy.config.safeMethods`](/up.proxy.config).
+- You can now configure a list of idempotent HTTP methods in [`up.net.config.safeMethods`](/up.net.config).
   The proxy cache will only cache idempotent requests and will clear the entire
   cache after a non-idempotent request.
 - Loading modals and popups will now open if there is a fragment update between the modal/popup's
@@ -114,8 +114,8 @@ Unreleased
   Web frameworks like Ruby on Rails or Sinatra are aware of the `_method` parameter and use
   its value as the method for routing.
 
-  You can configure this behavior in [`up.proxy.config.wrapMethods`](/up.proxy.config)
-  and [`up.proxy.config.wrapMethodParam`](/up.proxy.config).
+  You can configure this behavior in [`up.net.config.wrapMethods`](/up.net.config)
+  and [`up.net.config.wrapMethodParam`](/up.net.config).
 - The requested selector is now sent to the server as a request header `X-Up-Target`
   (this used to be `X-Up-Selector`). If you are using `unpoly-rails`, you can access it
   through `up.target` (this used to be `up.selector`).
@@ -142,7 +142,7 @@ Unreleased
 
 ### Compatible changes
 
-- You can now configure [`up.proxy.config.maxRequests`](/up.proxy.config) to limit
+- You can now configure [`up.net.config.maxRequests`](/up.net.config) to limit
   the maximum number of concurrent requests. Additional
   requests are queued. This currently ignores preloading requests.
 
@@ -227,7 +227,7 @@ Unreleased
   explicit selector is given.
 - Forms with `file` inputs will now cause forms to fall back to a standard submission without AJAX.
   In a future release we will be able to submit file inputs via AJAX.
-- The [request cache](/up.proxy) now reuses responses for `body` and `html` when asked for other selectors.
+- The [request cache](/up.net) now reuses responses for `body` and `html` when asked for other selectors.
 - Server responses can now change the document title by including an `X-Up-Title` header.
 
 
@@ -493,7 +493,7 @@ Refactored internals. No API changes.
 ### Compatible changes
 
 - Unpoly will now emit [events](http://unpoly.com/up.bus) `proxy:busy` and `proxy:idle` whenever it is loading or is done loading content over HTTP.
-- Add an option `up.proxy.defaults('busyDelay')` to delay the `proxy:busy` event in order to prevent flickering of loading spinners.
+- Add an option `up.net.defaults('busyDelay')` to delay the `proxy:busy` event in order to prevent flickering of loading spinners.
 
 
 0.7.8
@@ -543,7 +543,7 @@ Refactored internals. No API changes.
 
 ### Compatible changes
 
-- Use [up.proxy](http://unpoly.com/up.proxy) when submitting a form.
+- Use [up.net](http://unpoly.com/up.net) when submitting a form.
 
 
 0.7.2

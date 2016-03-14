@@ -1,4 +1,4 @@
-describe 'up.proxy', ->
+describe 'up.net', ->
 
   u = up.util
 
@@ -104,14 +104,14 @@ describe 'up.proxy', ->
       describe 'with config.wrapMethods set', ->
 
         it 'should be set by default', ->
-          expect(up.proxy.config.wrapMethods).toBePresent()
+          expect(up.net.config.wrapMethods).toBePresent()
 
 #        beforeEach ->
-#          @oldWrapMethod = up.proxy.config.wrapMethod
-#          up.proxy.config.wrapMethod = true
+#          @oldWrapMethod = up.net.config.wrapMethod
+#          up.net.config.wrapMethod = true
 #
 #        afterEach ->
-#          up.proxy.config.wrapMethod = @oldWrapMetod
+#          up.net.config.wrapMethod = @oldWrapMetod
 
         u.each ['GET', 'POST', 'HEAD', 'OPTIONS'], (method) ->
 
@@ -132,11 +132,11 @@ describe 'up.proxy', ->
       describe 'with config.maxRequests set', ->
 
         beforeEach ->
-          @oldMaxRequests = up.proxy.config.maxRequests
-          up.proxy.config.maxRequests = 1
+          @oldMaxRequests = up.net.config.maxRequests
+          up.net.config.maxRequests = 1
 
         afterEach ->
-          up.proxy.config.maxRequests = @oldMaxRequests
+          up.net.config.maxRequests = @oldMaxRequests
 
         it 'limits the number of concurrent requests', ->
           responses = []
@@ -157,27 +157,27 @@ describe 'up.proxy', ->
       describe 'events', ->
         
         beforeEach ->
-          up.proxy.config.slowDelay = 0
+          up.net.config.slowDelay = 0
           @events = []
-          u.each ['up:proxy:load', 'up:proxy:received', 'up:proxy:slow', 'up:proxy:recover'], (eventName) =>
+          u.each ['up:net:load', 'up:net:received', 'up:net:slow', 'up:net:recover'], (eventName) =>
             up.on eventName, =>
               @events.push eventName
 
-        it 'emits an up:proxy:slow event once the proxy started loading, and up:proxy:recover if it is done loading', ->
+        it 'emits an up:net:slow event once the proxy started loading, and up:net:recover if it is done loading', ->
   
           up.ajax(url: '/foo')
   
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
+            'up:net:load',
+            'up:net:slow'
           ])
   
           up.ajax(url: '/bar')
   
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:load'
+            'up:net:load',
+            'up:net:slow',
+            'up:net:load'
           ])
   
           jasmine.Ajax.requests.at(0).respondWith
@@ -186,10 +186,10 @@ describe 'up.proxy', ->
             responseText: 'foo'
   
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:load',
-            'up:proxy:received'
+            'up:net:load',
+            'up:net:slow',
+            'up:net:load',
+            'up:net:received'
           ])
   
           jasmine.Ajax.requests.at(1).respondWith
@@ -198,31 +198,31 @@ describe 'up.proxy', ->
             responseText: 'bar'
   
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:load',
-            'up:proxy:received',
-            'up:proxy:received',
-            'up:proxy:recover'
+            'up:net:load',
+            'up:net:slow',
+            'up:net:load',
+            'up:net:received',
+            'up:net:received',
+            'up:net:recover'
           ])
   
-        it 'does not emit an up:proxy:slow event if preloading', ->
+        it 'does not emit an up:net:slow event if preloading', ->
 
           # A request for preloading preloading purposes
           # doesn't make us busy.
           up.ajax(url: '/foo', preload: true)
           expect(@events).toEqual([
-            'up:proxy:load'
+            'up:net:load'
           ])
-          expect(up.proxy.isBusy()).toBe(false)
+          expect(up.net.isBusy()).toBe(false)
 
           # The same request with preloading does make us busy.
           up.ajax(url: '/foo')
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
+            'up:net:load',
+            'up:net:slow'
           ])
-          expect(up.proxy.isBusy()).toBe(true)
+          expect(up.net.isBusy()).toBe(true)
 
           # The response resolves both promises and makes
           # the proxy idle again.
@@ -231,30 +231,30 @@ describe 'up.proxy', ->
             contentType: 'text/html'
             responseText: 'foo'
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:received',
-            'up:proxy:recover'
+            'up:net:load',
+            'up:net:slow',
+            'up:net:received',
+            'up:net:recover'
           ])
-          expect(up.proxy.isBusy()).toBe(false)
+          expect(up.net.isBusy()).toBe(false)
 
-        it 'can delay the up:proxy:slow event to prevent flickering of spinners', ->
-          up.proxy.config.slowDelay = 100
+        it 'can delay the up:net:slow event to prevent flickering of spinners', ->
+          up.net.config.slowDelay = 100
 
           up.ajax(url: '/foo')
           expect(@events).toEqual([
-            'up:proxy:load'
+            'up:net:load'
           ])
 
           jasmine.clock().tick(50)
           expect(@events).toEqual([
-            'up:proxy:load'
+            'up:net:load'
           ])
 
           jasmine.clock().tick(50)
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
+            'up:net:load',
+            'up:net:slow'
           ])
 
           jasmine.Ajax.requests.at(0).respondWith
@@ -263,18 +263,18 @@ describe 'up.proxy', ->
             responseText: 'foo'
 
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:received',
-            'up:proxy:recover'
+            'up:net:load',
+            'up:net:slow',
+            'up:net:received',
+            'up:net:recover'
           ])
 
-        it 'does not emit up:proxy:recover if a delayed up:proxy:slow was never emitted due to a fast response', ->
-          up.proxy.config.slowDelay = 100
+        it 'does not emit up:net:recover if a delayed up:net:slow was never emitted due to a fast response', ->
+          up.net.config.slowDelay = 100
 
           up.ajax(url: '/foo')
           expect(@events).toEqual([
-            'up:proxy:load'
+            'up:net:load'
           ])
 
           jasmine.clock().tick(50)
@@ -287,17 +287,17 @@ describe 'up.proxy', ->
           jasmine.clock().tick(100)
 
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:received'
+            'up:net:load',
+            'up:net:received'
           ])
 
-        it 'emits up:proxy:recover if a request returned but failed', ->
+        it 'emits up:net:recover if a request returned but failed', ->
 
           up.ajax(url: '/foo')
 
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow'
+            'up:net:load',
+            'up:net:slow'
           ])
 
           jasmine.Ajax.requests.at(0).respondWith
@@ -306,47 +306,47 @@ describe 'up.proxy', ->
             responseText: 'something went wrong'
 
           expect(@events).toEqual([
-            'up:proxy:load',
-            'up:proxy:slow',
-            'up:proxy:received',
-            'up:proxy:recover'
+            'up:net:load',
+            'up:net:slow',
+            'up:net:received',
+            'up:net:recover'
           ])
 
 
-    describe 'up.proxy.preload', ->
+    describe 'up.net.preload', ->
 
       describeCapability 'canPushState', ->
 
         it "loads and caches the given link's destination", ->
           $link = affix('a[href="/path"]')
-          up.proxy.preload($link)
-          expect(u.isPromise(up.proxy.get(url: '/path'))).toBe(true)
+          up.net.preload($link)
+          expect(u.isPromise(up.net.get(url: '/path'))).toBe(true)
 
         it "does not load a link whose method has side-effects", ->
           $link = affix('a[href="/path"][data-method="post"]')
-          up.proxy.preload($link)
-          expect(up.proxy.get(url: '/path')).toBeUndefined()
+          up.net.preload($link)
+          expect(up.net.get(url: '/path')).toBeUndefined()
 
       describeFallback 'canPushState', ->
 
         it "does nothing", ->
           $link = affix('a[href="/path"]')
-          up.proxy.preload($link)
+          up.net.preload($link)
           expect(jasmine.Ajax.requests.count()).toBe(0)
 
-    describe 'up.proxy.get', ->
+    describe 'up.net.get', ->
 
       it 'should have tests'
 
-    describe 'up.proxy.set', ->
+    describe 'up.net.set', ->
 
       it 'should have tests'
 
-    describe 'up.proxy.alias', ->
+    describe 'up.net.alias', ->
 
       it 'uses an existing cache entry for another request (used in case of redirects)'
 
-    describe 'up.proxy.clear', ->
+    describe 'up.net.clear', ->
 
       it 'removes all cache entries'
 
@@ -357,8 +357,8 @@ describe 'up.proxy', ->
       it 'preloads the link destination on mouseover, after a delay'
 
       it 'triggers a separate AJAX request with a short cache expiry when hovered multiple times', (done) ->
-        up.proxy.config.cacheExpiry = 10
-        up.proxy.config.preloadDelay = 0
+        up.net.config.cacheExpiry = 10
+        up.net.config.preloadDelay = 0
         spyOn(up, 'follow')
         $element = affix('a[href="/foo"][up-preload]')
         Trigger.mouseover($element)
