@@ -566,6 +566,16 @@ up.motion = (($) ->
   ###
   none = u.resolvedDeferred
 
+  ###*
+  Returns whether the given animation option will cause the animation
+  to be skipped.
+
+  @function up.motion.isNone
+  @internal
+  ###
+  isNone = (animation) ->
+    animation is false || animation is 'none' || animation is none
+
   animation('none', none)
 
   animation('fade-in', ($ghost, options) ->
@@ -700,6 +710,7 @@ up.motion = (($) ->
   none: none
   when: resolvableWhen
   prependCopy: prependCopy
+  isNone: isNone
 
 )(jQuery)
 

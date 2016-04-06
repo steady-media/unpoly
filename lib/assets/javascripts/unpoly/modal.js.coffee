@@ -89,11 +89,9 @@ up.modal = (($) ->
   @param {String} [config.closeLabel='X']
     The label of the button that closes the dialog.
   @param {String} [config.openAnimation='fade-in']
-    The animation used to open the modal. The animation will be applied
-    to both the dialog box and the overlay dimming the page.
+    The animation used to open the dialog.
   @param {String} [config.closeAnimation='fade-out']
-    The animation used to close the modal. The animation will be applied
-    to both the dialog box and the overlay dimming the page.
+    The animation used to close the dialog.
   @param {String} [config.history=true]
     Whether opening a modal will add a browser history entry.
   @stable
@@ -106,10 +104,13 @@ up.modal = (($) ->
     history: true
     openAnimation: 'fade-in'
     closeAnimation: 'fade-out'
+    backdropOpenAnimation: 'fade-in'
+    backdropCloseAnimation: 'fade-out'
     closeLabel: '×'
     template: (config) ->
       """
       <div class="up-modal">
+        <div class="up-modal-backdrop"></div>
         <div class="up-modal-dialog">
           <div class="up-modal-close" up-close>#{config.closeLabel}</div>
           <div class="up-modal-content"></div>
@@ -333,6 +334,7 @@ up.modal = (($) ->
     options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), config.maxWidth)
     options.height = u.option(options.height, $link.attr('up-height'), config.height)
     options.animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
+    options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), config.backdropOpenAnimation)
     options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
     animateOptions = up.motion.animateOptions(options, $link)
@@ -353,9 +355,10 @@ up.modal = (($) ->
           promise =  up.replace(target, url, extractOptions)
         else
           promise = up.extract(target, html, extractOptions)
-        unless wasOpen
+        unless wasOpen || up.motion.isNone(options.animation)
           promise = promise.then ->
-            up.animate($('.up-modal'), options.animation, animateOptions)
+            up.animate($('.up-modal-backdrop'), options.backdropAnimation, animateOptions)
+            up.animate($('.up-modal-dialog'), options.animation, animateOptions)
         promise = promise.then ->
           up.emit('up:modal:opened', message: 'Modal opened')
         promise
@@ -474,7 +477,7 @@ up.modal = (($) ->
     If set to `"true"`, the modal remains
     open even if the page changes in the background.
   @param {String} [up-animation]
-    The animation to use when opening the modal.
+    The animation to use when opening the dialog.
   @param {String} [up-height]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
