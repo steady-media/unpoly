@@ -104,16 +104,23 @@ up.modal = (($) ->
     history: true
     openAnimation: 'fade-in'
     closeAnimation: 'fade-out'
+    closeDuration: null
+    closeEasing: null
+    openDuration: null
+    openEasing: null
     backdropOpenAnimation: 'fade-in'
     backdropCloseAnimation: 'fade-out'
     closeLabel: '×'
+
     template: (config) ->
       """
       <div class="up-modal">
         <div class="up-modal-backdrop"></div>
-        <div class="up-modal-dialog">
-          <div class="up-modal-close" up-close>#{config.closeLabel}</div>
-          <div class="up-modal-content"></div>
+        <div class="up-modal-viewport">
+          <div class="up-modal-dialog">
+            <div class="up-modal-close" up-close>#{config.closeLabel}</div>
+            <div class="up-modal-content"></div>
+          </div>
         </div>
       </div>
       """
@@ -140,6 +147,8 @@ up.modal = (($) ->
     $('.up-modal').attr('up-covered-url')
 
   reset = ->
+    console.debug('*** resetting up.modal *****')
+    # Destroy the modal container regardless whether it's currently in a closing animation
     close(animation: false)
     currentUrl = undefined
     config.reset()
@@ -157,7 +166,6 @@ up.modal = (($) ->
     $modal.removeAttr('up-covered-title')
 
   createFrame = (target, options) ->
-    shiftElements()
     $modal = $(templateHtml())
     $modal.attr('up-sticky', '') if options.sticky
     $modal.attr('up-covered-url', up.browser.url())
@@ -172,7 +180,6 @@ up.modal = (($) ->
     u.$createPlaceholder(target, $content)
     $modal.appendTo(document.body)
     $modal
-
   unshifters = []
 
   # Gives `<body>` a right padding in the width of a scrollbar.
@@ -183,6 +190,11 @@ up.modal = (($) ->
   # modal overlay, which has its own scroll bar.
   # This is screwed up, but Bootstrap does the same.
   shiftElements = ->
+    # unshiftElements()
+    console.debug('****** SHIFT ++ *******')
+    if unshifters.length
+      u.error('Tried to call shiftElements multiple times %o', unshifters.length)
+    $('.up-modal').addClass('up-modal-ready')
     scrollbarWidth = u.scrollbarWidth()
     bodyRightPadding = parseInt($('body').css('padding-right'))
     bodyRightShift = scrollbarWidth + bodyRightPadding
@@ -200,6 +212,8 @@ up.modal = (($) ->
 
   # Reverts the effects of `shiftElements`.
   unshiftElements = ->
+    console.debug('****** UNSHIFT *******')
+    $('.up-modal').removeClass('up-modal-ready')
     unshifter() while unshifter = unshifters.pop()
 
   ###*
@@ -325,6 +339,7 @@ up.modal = (($) ->
   @internal
   ###
   open = (options) ->
+    console.debug('~~~ modal.open ~~~')
     options = u.options(options)
     $link = u.option(u.pluckKey(options, '$link'), u.nullJQuery())
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
@@ -337,7 +352,7 @@ up.modal = (($) ->
     options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), config.backdropOpenAnimation)
     options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
-    animateOptions = up.motion.animateOptions(options, $link)
+    animateOptions = up.motion.animateOptions(options, $link, { duration: config.openDuration, easing: config.openEasing })
 
     # Although we usually fall back to full page loads if a browser doesn't support pushState,
     # in the case of modals we assume that the developer would rather see a dialog
@@ -352,15 +367,20 @@ up.modal = (($) ->
         options.beforeSwap = -> createFrame(target, options)
         extractOptions = u.merge(options, animation: false)
         if url
-          promise =  up.replace(target, url, extractOptions)
+          promise = up.replace(target, url, extractOptions)
         else
           promise = up.extract(target, html, extractOptions)
+        # If we're not animating the dialog, don't animate the backdrop either
         unless wasOpen || up.motion.isNone(options.animation)
           promise = promise.then ->
-            up.animate($('.up-modal-backdrop'), options.backdropAnimation, animateOptions)
-            up.animate($('.up-modal-dialog'), options.animation, animateOptions)
+            $.when(
+              up.animate($('.up-modal-backdrop'), options.backdropAnimation, animateOptions),
+              up.animate($('.up-modal-viewport'), options.animation, animateOptions)
+            )
         promise = promise.then ->
+          shiftElements()
           up.emit('up:modal:opened', message: 'Modal opened')
+        console.debug("modal.open returning %o", promise)
         promise
       else
         # Although someone prevented opening the modal, keep a uniform API for
@@ -393,24 +413,39 @@ up.modal = (($) ->
   @function up.modal.close
   @param {Object} options
     See options for [`up.animate`](/up.animate)
-  @return {Deferred}
+  @return {Promise}
     A promise that will be resolved once the modal's close
     animation has finished.
   @stable
   ###
   close = (options) ->
+    options = u.options(options)
     $modal = $('.up-modal')
     if $modal.length
       if up.bus.nobodyPrevents('up:modal:close', $element: $modal, message: 'Closing modal')
-        options = u.options(options,
-          animation: config.closeAnimation,
-          url: $modal.attr('up-covered-url')
-          title: $modal.attr('up-covered-title')
-        )
-        currentUrl = undefined
-        promise = up.destroy($modal, options)
+        unshiftElements()
+        viewportCloseAnimation = u.option(options.animation, config.closeAnimation)
+        backdropCloseAnimation = u.option(options.backdropAnimation, config.backdropCloseAnimation)
+        animateOptions = up.motion.animateOptions(options, { duration: config.closeDuration, easing: config.closeEasing })
+        if up.motion.isNone(viewportCloseAnimation)
+          # If we're not animating the dialog, don't animate the backdrop either
+          promise = u.resolvedPromise()
+        else
+          promise = $.when(
+            up.animate($('.up-modal-viewport'), viewportCloseAnimation, animateOptions),
+            up.animate($('.up-modal-backdrop'), backdropCloseAnimation, animateOptions)
+          )
         promise = promise.then ->
-          unshiftElements()
+          destroyOptions = u.options(
+            u.except(options, 'animation', 'duration', 'easing', 'delay'),
+            url: $modal.attr('up-covered-url')
+            title: $modal.attr('up-covered-title')
+          )
+          # currentUrl must be deleted *before* calling up.destroy,
+          # since up.navigation listens to up:fragment:destroyed and then
+          # re-assigns .up-current classes.
+          currentUrl = undefined
+          up.destroy($modal, destroyOptions)
           up.emit('up:modal:closed', message: 'Modal closed')
         promise
       else
@@ -488,8 +523,8 @@ up.modal = (($) ->
     Whether to add a browser history entry for the modal's source URL.
   @stable
   ###
-  up.link.onAction '[up-modal]', ($link) ->
-    follow($link)
+  up.link.onAction '[up-modal]', ($mlink) ->
+    follow($mlink)
 
   # Close the modal when someone clicks outside the dialog
   # (but not on a modal opener).

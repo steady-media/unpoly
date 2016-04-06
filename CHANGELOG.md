@@ -60,6 +60,7 @@ Unreleased
 - Fix a bug where a link would be followed multiple times if the link's
   click area was expanded using [`[up-expand]`](/up-expand) and if the
   link also had an [`up-dash`](/up-dash) attribute.
+- [`up.destroy`](/up.destroy) now returns a resolved deferred if the given selector or jQuery collection does not exist
 
 
 0.22.0

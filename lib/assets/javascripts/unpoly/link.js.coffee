@@ -225,7 +225,12 @@ up.link = (($) ->
   onAction = (selector, handler) ->
     followVariantSelectors.push(selector)
     handlerWithActiveMark = ($link) ->
-      up.navigation.withActiveMark $link, { enlarge: true }, -> handler($link)
+      up.navigation.withActiveMark $link, { enlarge: true }, ->
+        result = handler($link)
+        unless u.isPromise(result)
+          console.log("Not a promise: %o", result)
+          debugger
+        result
     up.on 'click', "a#{selector}, [up-href]#{selector}", (event, $link) ->
       if shouldProcessLinkEvent(event, $link)
         if $link.is('[up-instant]')

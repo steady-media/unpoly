@@ -184,12 +184,14 @@ up.motion = (($) ->
   @function up.motion.animateOptions
   @internal
   ###
-  animateOptions = (allOptions, $element = null) ->
+  animateOptions = (allOptions, args...) ->
     allOptions = u.options(allOptions)
+    moduleDefaults = u.extractOptions(args)
+    $element = if args.length > 1 then args[1] else undefined
     options = {}
-    options.easing = u.option(allOptions.easing, $element?.attr('up-easing'), config.easing)
-    options.duration = Number(u.option(allOptions.duration, $element?.attr('up-duration'), config.duration))
-    options.delay = Number(u.option(allOptions.delay, $element?.attr('up-delay'), config.delay))
+    options.easing = u.option(allOptions.easing, $element?.attr('up-easing'), moduleDefaults.easing, config.easing)
+    options.duration = Number(u.option(allOptions.duration, $element?.attr('up-duration'), moduleDefaults.duration, config.duration))
+    options.delay = Number(u.option(allOptions.delay, $element?.attr('up-delay'), moduleDefaults.delay, config.delay))
     options
       
   findAnimation = (name) ->
