@@ -942,7 +942,8 @@ up.util = (($) ->
     deferred.then(withoutTransition)
     $element.data(ANIMATION_DEFERRED_KEY, deferred)
     deferred.then(-> $element.removeData(ANIMATION_DEFERRED_KEY))
-    endTimeout = setTimeout((-> deferred.resolve()), opts.duration + opts.delay)
+    endTimeout = setTimer opts.duration + opts.delay, ->
+      deferred.resolve() unless isDetached($element)
     deferred.then(-> clearTimeout(endTimeout)) # clean up in case we're canceled
     # Return the whole deferred and not just return a thenable.
     # Other code will need the possibility to cancel the animation
@@ -1613,6 +1614,11 @@ up.util = (($) ->
     else
       {}
 
+  isDetached = (element) ->
+    element = unJQuery(element)
+    not jQuery.contains(document.documentElement, element)
+
+  isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
   appendRequestData: appendRequestData
@@ -1707,6 +1713,7 @@ up.util = (($) ->
   pluckData: pluckData
   pluckKey: pluckKey
   extractOptions: extractOptions
+  isDetached: isDetached
   noop: noop
 
 )($)
