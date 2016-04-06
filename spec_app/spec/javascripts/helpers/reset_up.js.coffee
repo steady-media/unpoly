@@ -1,4 +1,5 @@
-afterEach ->
-  up.reset()
+afterEach (done) ->
   $('.up-error').remove()
-  console.debug('--- Unpoly was reset after example ---')
+  up.reset().then ->
+    console.debug('--- Unpoly was reset after example ---')
+    done()

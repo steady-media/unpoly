@@ -53,8 +53,9 @@ up.tooltip = (($) ->
 
   reset = ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
-    close(animation: false)
-    config.reset()
+    promise = close(animation: false)
+    promise.then(config.reset)
+    promise
 
   setPosition = ($link, $tooltip, position) ->
     linkBox = u.measure($link)

@@ -90,8 +90,9 @@ up.popup = (($) ->
     history: false
 
   reset = ->
-    close(animation: false)
-    config.reset()
+    promise = close(animation: false)
+    promise.then(config.reset)
+    promise
 
   setPosition = ($link, position) ->
     linkBox = u.measure($link, full: true)

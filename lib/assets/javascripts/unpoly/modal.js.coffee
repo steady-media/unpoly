@@ -149,9 +149,9 @@ up.modal = (($) ->
   reset = ->
     console.debug('*** resetting up.modal *****')
     # Destroy the modal container regardless whether it's currently in a closing animation
-    close(animation: false)
-    currentUrl = undefined
-    config.reset()
+    promise = close(animation: false)
+    promise.then(config.reset)
+    promise
 
   templateHtml = ->
     template = config.template
