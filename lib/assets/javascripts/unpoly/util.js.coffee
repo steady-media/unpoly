@@ -867,8 +867,11 @@ up.util = (($) ->
   ###
   temporaryCss = ($element, css, block) ->
     oldCss = $element.css(Object.keys(css))
+    console.debug("old css is %o", oldCss)
     $element.css(css)
-    memo = -> $element.css(oldCss)
+    memo = ->
+      console.debug("restoring old CSS: %o", oldCss)
+      $element.css(oldCss)
     if block
       block()
       memo()
@@ -935,14 +938,26 @@ up.util = (($) ->
       'transition-duration': "#{opts.duration}ms"
       'transition-delay': "#{opts.delay}ms"
       'transition-timing-function': opts.easing
+
+    console.debug("transition is %o", transition)
     withoutCompositing = forceCompositing($element)
+    console.log("transition-property before is %o", $element.css('transition'))
     withoutTransition = temporaryCss($element, transition)
+    console.log("transition-property after is %o", $element.css('transition'))
+    $element.addClass('up-animating')
     $element.css(lastFrame)
+    deferred.then -> console.debug("deferred was resolved!")
     deferred.then(withoutCompositing)
-    deferred.then(withoutTransition)
+    deferred.then ->
+      # $element.css('transition-property': 'font-size')
+      $element.css('transition': 'none')
+      # withoutTransition()
+      deferred.then -> console.debug('after removal is %o', $element.css('transition'))
     $element.data(ANIMATION_DEFERRED_KEY, deferred)
     deferred.then(-> $element.removeData(ANIMATION_DEFERRED_KEY))
-    endTimeout = setTimer opts.duration + opts.delay, ->
+    animationEnd = opts.duration + opts.delay
+    endTimeout = setTimer animationEnd, ->
+      $element.removeClass('up-animating')
       deferred.resolve() unless isDetached($element)
     deferred.then(-> clearTimeout(endTimeout)) # clean up in case we're canceled
     # Return the whole deferred and not just return a thenable.
@@ -967,7 +982,9 @@ up.util = (($) ->
   ###
   finishCssAnimate = (elementOrSelector) ->
     $(elementOrSelector).each ->
+      console.debug("Looking at %o", this)
       if existingAnimation = pluckData(this, ANIMATION_DEFERRED_KEY)
+        console.debug("Has animation", existingAnimation)
         existingAnimation.resolve()
 
   ###*

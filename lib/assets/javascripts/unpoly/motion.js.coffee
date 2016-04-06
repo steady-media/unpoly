@@ -277,6 +277,21 @@ up.motion = (($) ->
     u.finishCssAnimate($element)
     finishGhosting($element)
 
+  ###*
+  Completes all [animations](/up.animate) and [transitions](/up.morph)
+  on the screen by jumping to the last animation frame instantly.
+
+  All callbacks chained to the original animation promises will be called.
+
+  Does nothing if no elements are not currently animating.
+
+  @function up.motion.finishAll
+  @experimental
+  ###
+  finishAll = ->
+    console.debug("Finishing #{$('.up-animating').length} elements")
+    finish('.up-animating')
+
   finishGhosting = ($collection) ->
     $collection.each ->
       $element = $(this)
@@ -704,6 +719,7 @@ up.motion = (($) ->
   animate: animate
   animateOptions: animateOptions
   finish: finish
+  finishAll: finishAll
   transition: transition
   animation: animation
   config: config

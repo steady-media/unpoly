@@ -124,7 +124,7 @@ describe 'up.modal', ->
       
       beforeEach ->
         @$link = affix('a[href="/path"][up-modal=".target"]')
-        @followSpy = up.modal.knife.mock('follow')
+        @followSpy = up.modal.knife.mock('follow').and.returnValue(u.resolvedPromise())
         @defaultSpy = up.link.knife.mock('allowDefault').and.callFake((event) -> event.preventDefault())
 
       it 'opens the clicked link in a modal', ->

@@ -44,6 +44,37 @@ describe 'up.motion', ->
           up.animate($element, { 'font-size': '40px' }, duration: 10000, easing: 'linear')
           expect($element.css('font-size')).toEqual('40px')
 
+    describe 'up.motion.finish', ->
+
+      it 'cancels an existing animation on the element by instantly jumping to the last frame'
+
+      it 'cancels an existing transition on the element by instantly jumping to the last frame'
+
+    describe 'up.motion.finishAll', ->
+
+      it 'cancels all animations on the screen', ->
+        topLeft =
+          position: 'fixed'
+          top: '0'
+          left: '0'
+          'background-color': 'blue'
+        $element1 = affix('.element1').text('content1').css(topLeft)
+        $element2 = affix('.element2').text('content2').css(topLeft)
+
+        up.animate($element1, 'fade-in', duration: 3000)
+        up.animate($element2, 'fade-in', duration: 3000)
+
+        opacity = ($element) -> Number($element.css('opacity'))
+
+        expect(opacity($element1)).toBeAround(0.0, 0.1)
+        expect(opacity($element2)).toBeAround(0.0, 0.1)
+
+        up.motion.finishAll()
+
+        $element1 = $('.element1')
+        $element2 = $('.element2')
+        expect(opacity($element1)).toBe(1.0)
+        expect(opacity($element2)).toBe(1.0)
 
     describe 'up.morph', ->
 
