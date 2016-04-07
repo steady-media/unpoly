@@ -196,8 +196,9 @@ up.motion = (($) ->
       
   findAnimation = (name) ->
     animations[name] or u.error("Unknown animation %o", name)
-    
+
   GHOSTING_DEFERRED_KEY = 'up-ghosting-deferred'
+  GHOSTING_CLASS = 'up-ghosting'
 
   withGhosts = ($old, $new, options, block) ->
 
@@ -211,6 +212,7 @@ up.motion = (($) ->
     newScrollTop = undefined
 
     $viewport = up.layout.viewportOf($old)
+    $both = $old.add($new)
 
     u.temporaryCss $new, display: 'none', ->
       # Within this block, $new is hidden but $old is visible
@@ -247,12 +249,12 @@ up.motion = (($) ->
     # already in progress. If someone attempted a new animation on the
     # same elements, the stored promises would be resolved by the second
     # animation call, making the transition jump to the last frame instantly.
-    $old.data(GHOSTING_DEFERRED_KEY, deferred)
-    $new.data(GHOSTING_DEFERRED_KEY, deferred)
-    
+    $both.data(GHOSTING_DEFERRED_KEY, deferred)
+    $both.addClass(GHOSTING_CLASS)
+
     deferred.then ->
-      $old.removeData(GHOSTING_DEFERRED_KEY)
-      $new.removeData(GHOSTING_DEFERRED_KEY)
+      $both.removeData(GHOSTING_DEFERRED_KEY)
+      $both.removeClass(GHOSTING_CLASS)
       # Now that the transition is over we show $new again.
       showNew()
       oldCopy.$bounds.remove()
@@ -279,7 +281,8 @@ up.motion = (($) ->
     $element = $(elementOrSelector)
     $animatingSubtree = u.findWithSelf($element, '.up-animating')
     u.finishCssAnimate($animatingSubtree)
-    finishGhosting($element)
+    $ghostingSubtree = u.findWithSelf($element, ".#{GHOSTING_CLASS}")
+    finishGhosting($ghostingSubtree)
 
   finishGhosting = ($collection) ->
     $collection.each ->

@@ -86,7 +86,46 @@ describe 'up.motion', ->
           expect(currentTransition).not.toContain('none')
           expect(currentTransition).not.toContain('all')
 
-        it 'cancels an existing transition on the element by instantly jumping to the last frame'
+        it 'cancels an existing transition on the element by instantly jumping to the last frame', ->
+          $old = affix('.old').text('old content')
+          $new = affix('.new').text('new content')
+
+          up.morph($old, $new, 'cross-fade', duration: 2000)
+          expect($('.up-ghost').length).toBe(2)
+
+          up.motion.finish($old)
+
+          expect($('.up-ghost').length).toBe(0)
+          expect($old.css('display')).toEqual('none')
+          expect($new.css('display')).toEqual('block')
+
+        it 'can be called on either element involved in a transition', ->
+          $old = affix('.old').text('old content')
+          $new = affix('.new').text('new content')
+
+          up.morph($old, $new, 'cross-fade', duration: 2000)
+          expect($('.up-ghost').length).toBe(2)
+
+          up.motion.finish($new)
+
+          expect($('.up-ghost').length).toBe(0)
+          expect($old.css('display')).toEqual('none')
+          expect($new.css('display')).toEqual('block')
+
+
+        it 'cancels transitions on children of the given element', ->
+          $parent = affix('.parent')
+          $old = $parent.affix('.old').text('old content')
+          $new = $parent.affix('.new').text('new content')
+
+          up.morph($old, $new, 'cross-fade', duration: 2000)
+          expect($('.up-ghost').length).toBe(2)
+
+          up.motion.finish($parent)
+
+          expect($('.up-ghost').length).toBe(0)
+          expect($old.css('display')).toEqual('none')
+          expect($new.css('display')).toEqual('block')
 
       describe 'when called without arguments', ->
 
