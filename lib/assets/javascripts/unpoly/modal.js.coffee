@@ -147,7 +147,6 @@ up.modal = (($) ->
     $('.up-modal').attr('up-covered-url')
 
   reset = ->
-    console.debug('*** resetting up.modal *****')
     # Destroy the modal container regardless whether it's currently in a closing animation
     close(animation: false)
     currentUrl = undefined
@@ -190,8 +189,6 @@ up.modal = (($) ->
   # modal overlay, which has its own scroll bar.
   # This is screwed up, but Bootstrap does the same.
   shiftElements = ->
-    # unshiftElements()
-    console.debug('****** SHIFT ++ *******')
     if unshifters.length
       u.error('Tried to call shiftElements multiple times %o', unshifters.length)
     $('.up-modal').addClass('up-modal-ready')
@@ -212,7 +209,6 @@ up.modal = (($) ->
 
   # Reverts the effects of `shiftElements`.
   unshiftElements = ->
-    console.debug('****** UNSHIFT *******')
     $('.up-modal').removeClass('up-modal-ready')
     unshifter() while unshifter = unshifters.pop()
 
@@ -339,7 +335,6 @@ up.modal = (($) ->
   @internal
   ###
   open = (options) ->
-    console.debug('~~~ modal.open ~~~')
     options = u.options(options)
     $link = u.option(u.pluckKey(options, '$link'), u.nullJQuery())
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
@@ -380,7 +375,6 @@ up.modal = (($) ->
         promise = promise.then ->
           shiftElements()
           up.emit('up:modal:opened', message: 'Modal opened')
-        console.debug("modal.open returning %o", promise)
         promise
       else
         # Although someone prevented opening the modal, keep a uniform API for
@@ -523,8 +517,8 @@ up.modal = (($) ->
     Whether to add a browser history entry for the modal's source URL.
   @stable
   ###
-  up.link.onAction '[up-modal]', ($mlink) ->
-    follow($mlink)
+  up.link.onAction '[up-modal]', ($link) ->
+    follow($link)
 
   # Close the modal when someone clicks outside the dialog
   # (but not on a modal opener).

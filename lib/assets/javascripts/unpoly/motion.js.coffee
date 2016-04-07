@@ -289,7 +289,6 @@ up.motion = (($) ->
   @experimental
   ###
   finishAll = ->
-    console.debug("Finishing #{$('.up-animating').length} elements")
     finish('.up-animating')
 
   finishGhosting = ($collection) ->
