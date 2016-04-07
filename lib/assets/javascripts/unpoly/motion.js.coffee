@@ -261,35 +261,25 @@ up.motion = (($) ->
     deferred
       
   ###*
-  Completes all [animations](/up.animate) and [transitions](/up.morph)
-  for the given element by jumping to the last animation frame instantly.
+  Completes [animations](/up.animate) and [transitions](/up.morph).
 
-  All callbacks chained to the original animation's promise will be called.
+  If called without arguments, all animations on the screen are completed.
+  If given an element (or selector), animations on that element and its children
+  are completed.
 
-  Does nothing if the given element is not currently animating.
+  Animations are completed by jumping to the last animation frame instantly.
+
+  Does nothing if there are no animation to complete.
   
   @function up.motion.finish
-  @param {Element|jQuery|String} elementOrSelector
+  @param {Element|jQuery|String} [elementOrSelector]
   @stable
   ###
-  finish = (elementOrSelector) ->
+  finish = (elementOrSelector = '.up-animating') ->
     $element = $(elementOrSelector)
-    u.finishCssAnimate($element)
+    $animatingSubtree = u.findWithSelf($element, '.up-animating')
+    u.finishCssAnimate($animatingSubtree)
     finishGhosting($element)
-
-  ###*
-  Completes all [animations](/up.animate) and [transitions](/up.morph)
-  on the screen by jumping to the last animation frame instantly.
-
-  All callbacks chained to the original animation promises will be called.
-
-  Does nothing if no elements are not currently animating.
-
-  @function up.motion.finishAll
-  @experimental
-  ###
-  finishAll = ->
-    finish('.up-animating')
 
   finishGhosting = ($collection) ->
     $collection.each ->
@@ -718,7 +708,6 @@ up.motion = (($) ->
   animate: animate
   animateOptions: animateOptions
   finish: finish
-  finishAll: finishAll
   transition: transition
   animation: animation
   config: config

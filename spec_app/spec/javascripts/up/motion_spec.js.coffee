@@ -46,64 +46,68 @@ describe 'up.motion', ->
 
     describe 'up.motion.finish', ->
 
-      it 'cancels an existing animation on the element by instantly jumping to the last frame', ->
-        $element = affix('.element').text('content')
-        up.animate($element, { 'font-size': '40px', 'opacity': '0.33' }, duration: 10000)
-        up.motion.finish($element)
-        expect($element.css('font-size')).toEqual('40px')
-        expect($element.css('opacity')).toEqual('0.33')
+      describe 'when called with an element or selector', ->
 
-      it 'does not cancel animations on other elements', ->
-        $element1 = affix('.element1').text('content1')
-        $element2 = affix('.element2').text('content2')
-        up.animate($element1, 'fade-in', duration: 10000)
-        up.animate($element2, 'fade-in', duration: 10000)
-        up.motion.finish($element1)
-        expect(Number($element1.css('opacity'))).toEqual(1)
-        expect(Number($element2.css('opacity'))).toEqual(0, 0.1)
+        it 'cancels an existing animation on the given element by instantly jumping to the last frame', ->
+          $element = affix('.element').text('content')
+          up.animate($element, { 'font-size': '40px', 'opacity': '0.33' }, duration: 10000)
+          up.motion.finish($element)
+          expect($element.css('font-size')).toEqual('40px')
+          expect($element.css('opacity')).toEqual('0.33')
 
-      it 'restores existing transitions on the element', ->
-        $element = affix('.element').text('content')
-        $element.css('transition': 'font-size 3s ease')
-        oldTransition = $element.css('transition')
-        expect(oldTransition).toContain('font-size') # be paranoid
-        up.animate($element, 'fade-in', duration: 10000)
-        up.motion.finish($element)
-        expect(Number($element.css('opacity'))).toEqual(1)
-        currentTransition = $element.css('transition')
-        expect(currentTransition).toEqual(oldTransition)
-        expect(currentTransition).toContain('font-size')
-        expect(currentTransition).not.toContain('opacity')
-        expect(currentTransition).not.toContain('none')
-        expect(currentTransition).not.toContain('all')
+        it 'cancels animations on children of the given element', ->
+          $parent = affix('.element')
+          $child = $parent.affix('.child')
+          up.animate($child, { 'font-size': '40px' }, duration: 10000)
+          up.motion.finish($parent)
+          expect($child.css('font-size')).toEqual('40px')
 
-      it 'cancels an existing transition on the element by instantly jumping to the last frame'
+        it 'does not cancel animations on other elements', ->
+          $element1 = affix('.element1').text('content1')
+          $element2 = affix('.element2').text('content2')
+          up.animate($element1, 'fade-in', duration: 10000)
+          up.animate($element2, 'fade-in', duration: 10000)
+          up.motion.finish($element1)
+          expect(Number($element1.css('opacity'))).toEqual(1)
+          expect(Number($element2.css('opacity'))).toEqual(0, 0.1)
 
-    describe 'up.motion.finishAll', ->
+        it 'restores existing transitions on the element', ->
+          $element = affix('.element').text('content')
+          $element.css('transition': 'font-size 3s ease')
+          oldTransition = $element.css('transition')
+          expect(oldTransition).toContain('font-size') # be paranoid
+          up.animate($element, 'fade-in', duration: 10000)
+          up.motion.finish($element)
+          expect(Number($element.css('opacity'))).toEqual(1)
+          currentTransition = $element.css('transition')
+          expect(currentTransition).toEqual(oldTransition)
+          expect(currentTransition).toContain('font-size')
+          expect(currentTransition).not.toContain('opacity')
+          expect(currentTransition).not.toContain('none')
+          expect(currentTransition).not.toContain('all')
 
-      it 'cancels all animations on the screen', ->
-        topLeft =
-          position: 'fixed'
-          top: '0'
-          left: '0'
-          'background-color': 'blue'
-        $element1 = affix('.element1').text('content1').css(topLeft)
-        $element2 = affix('.element2').text('content2').css(topLeft)
+        it 'cancels an existing transition on the element by instantly jumping to the last frame'
 
-        up.animate($element1, 'fade-in', duration: 3000)
-        up.animate($element2, 'fade-in', duration: 3000)
+      describe 'when called without arguments', ->
 
-        opacity = ($element) -> Number($element.css('opacity'))
+        it 'cancels all animations on the screen', ->
+          $element1 = affix('.element1').text('content1')
+          $element2 = affix('.element2').text('content2')
 
-        expect(opacity($element1)).toBeAround(0.0, 0.1)
-        expect(opacity($element2)).toBeAround(0.0, 0.1)
+          up.animate($element1, 'fade-in', duration: 3000)
+          up.animate($element2, 'fade-in', duration: 3000)
 
-        up.motion.finishAll()
+          opacity = ($element) -> Number($element.css('opacity'))
 
-        $element1 = $('.element1')
-        $element2 = $('.element2')
-        expect(opacity($element1)).toBe(1.0)
-        expect(opacity($element2)).toBe(1.0)
+          expect(opacity($element1)).toBeAround(0.0, 0.1)
+          expect(opacity($element2)).toBeAround(0.0, 0.1)
+
+          up.motion.finish()
+
+          $element1 = $('.element1')
+          $element2 = $('.element2')
+          expect(opacity($element1)).toBe(1.0)
+          expect(opacity($element2)).toBe(1.0)
 
     describe 'up.morph', ->
 
