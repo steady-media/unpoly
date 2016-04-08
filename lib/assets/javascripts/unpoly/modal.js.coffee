@@ -46,7 +46,7 @@ configure Unpoly to [use a different HTML structure](/up.modal.config).
 \#\#\#\# Closing behavior
 
 By default the dialog automatically closes
-*whenever a page fragment behind the dialog is updated*.
+*when a link inside a modal changes a fragment behind the modal*.
 This is useful to have the dialog interact with the page that
 opened it, e.g. by updating parts of a larger form or by signing in a user
 and revealing additional information.
@@ -109,6 +109,9 @@ up.modal = (($) ->
     The timing function controlling the acceleration of the opening animation.
   @param {String} [config.closeEasing]
     The timing function controlling the acceleration of the closing animation.
+  @param {Boolean} [options.sticky=false]
+    If set to `true`, the modal remains
+    open even it changes the page in the background.
   @stable
   ###
   config = u.config
@@ -126,6 +129,7 @@ up.modal = (($) ->
     backdropOpenAnimation: 'fade-in'
     backdropCloseAnimation: 'fade-out'
     closeLabel: '×'
+    flavors: { default: {} }
 
     template: (config) ->
       """
@@ -133,8 +137,8 @@ up.modal = (($) ->
         <div class="up-modal-backdrop"></div>
         <div class="up-modal-viewport">
           <div class="up-modal-dialog">
-            <div class="up-modal-close" up-close>#{config.closeLabel}</div>
             <div class="up-modal-content"></div>
+            <div class="up-modal-close" up-close>#{flavorDefault('closeLabel')}</div>
           </div>
         </div>
       </div>
@@ -151,6 +155,8 @@ up.modal = (($) ->
   ###
   currentUrl = undefined
 
+  currentFlavor = undefined
+
   ###*
   Returns the URL of the page behind the modal overlay.
 
@@ -165,10 +171,11 @@ up.modal = (($) ->
     # Destroy the modal container regardless whether it's currently in a closing animation
     close(animation: false)
     currentUrl = undefined
+    currentFlavor = undefined
     config.reset()
 
   templateHtml = ->
-    template = config.template
+    template = flavorDefault('template')
     if u.isFunction(template)
       template(config)
     else
@@ -181,6 +188,7 @@ up.modal = (($) ->
 
   createFrame = (target, options) ->
     $modal = $(templateHtml())
+    $modal.attr('up-flavor', currentFlavor)
     $modal.attr('up-sticky', '') if options.sticky
     $modal.attr('up-covered-url', up.browser.url())
     $modal.attr('up-covered-title', document.title)
@@ -259,7 +267,7 @@ up.modal = (($) ->
     By [default](/up.modal.config) the dialog will grow to fit its contents.
   @param {Boolean} [options.sticky=false]
     If set to `true`, the modal remains
-    open even if the page changes in the background.
+    open even it changes the page in the background.
   @param {String} [options.confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the modal is being opened.
@@ -355,19 +363,20 @@ up.modal = (($) ->
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
     html = u.pluckKey(options, 'html')
     target = u.option(u.pluckKey(options, 'target'), $link.attr('up-modal'), 'body')
-    options.width = u.option(options.width, $link.attr('up-width'), config.width)
-    options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), config.maxWidth)
-    options.height = u.option(options.height, $link.attr('up-height'), config.height)
-    options.animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
-    options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), config.backdropOpenAnimation)
-    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'))
+    currentFlavor = u.option(options.flavor, $link.attr('up-flavor'), 'default')
+    options.width = u.option(options.width, $link.attr('up-width'), flavorDefault('width'))
+    options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), flavorDefault('maxWidth'))
+    options.height = u.option(options.height, $link.attr('up-height'), flavorDefault('height'))
+    options.animation = u.option(options.animation, $link.attr('up-animation'), flavorDefault('openAnimation'))
+    options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), flavorDefault('backdropOpenAnimation'))
+    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'), flavorDefault('sticky'))
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
-    animateOptions = up.motion.animateOptions(options, $link, { duration: config.openDuration, easing: config.openEasing })
+    animateOptions = up.motion.animateOptions(options, $link, duration: flavorDefault('openDuration'), easing: flavorDefault('openEasing'))
 
     # Although we usually fall back to full page loads if a browser doesn't support pushState,
     # in the case of modals we assume that the developer would rather see a dialog
     # without an URL update.
-    options.history = u.option(options.history, u.castedAttr($link, 'up-history'), config.history)
+    options.history = u.option(options.history, u.castedAttr($link, 'up-history'), flavorDefault('history'))
     options.history = false unless up.browser.canPushState()
 
     up.browser.confirm(options).then ->
@@ -433,9 +442,9 @@ up.modal = (($) ->
     if $modal.length
       if up.bus.nobodyPrevents('up:modal:close', $element: $modal, message: 'Closing modal')
         unshiftElements()
-        viewportCloseAnimation = u.option(options.animation, config.closeAnimation)
-        backdropCloseAnimation = u.option(options.backdropAnimation, config.backdropCloseAnimation)
-        animateOptions = up.motion.animateOptions(options, { duration: config.closeDuration, easing: config.closeEasing })
+        viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
+        backdropCloseAnimation = u.option(options.backdropAnimation, flavorDefault('backdropCloseAnimation'))
+        animateOptions = up.motion.animateOptions(options, duration: flavorDefault('closeDuration'), easing: flavorDefault('closeEasing'))
         if up.motion.isNone(viewportCloseAnimation)
           # If we're not animating the dialog, don't animate the backdrop either
           promise = u.resolvedPromise()
@@ -455,6 +464,7 @@ up.modal = (($) ->
           # re-assigns .up-current classes.
           currentUrl = undefined
           up.destroy($modal, destroyOptions)
+          currentFlavor = undefined
           up.emit('up:modal:closed', message: 'Modal closed')
         promise
       else
@@ -499,6 +509,24 @@ up.modal = (($) ->
   contains = (elementOrSelector) ->
     $element = $(elementOrSelector)
     $element.closest('.up-modal').length > 0
+
+  flavor = (name, overrideConfig = {}) ->
+    config.flavors[name] ||= {}
+    u.extend(config.flavors[name], overrideConfig)
+
+  ###*
+  Returns the config option for the current flavor.
+
+  @function evalConfig
+  @internal
+  ###
+  flavorDefault = (key) ->
+    console.debug('--- default for %o', key)
+    if u.contains(key, 'animation')
+      console.debug('--- Grepping config %o (flavor %o) for key %o, currentFlavor is %o', config, config.flavors[currentFlavor], key, currentFlavor)
+    value = config.flavors[currentFlavor][key] if currentFlavor
+    value = config[key] if u.isMissing(value)
+    value
 
   ###*
   Clicking this link will load the destination via AJAX and open
@@ -594,5 +622,6 @@ up.modal = (($) ->
   contains: contains
   source: -> up.error('up.modal.source no longer exists. Please use up.popup.url instead.')
   isOpen: isOpen
+  flavor: flavor
 
 )(jQuery)
