@@ -10,6 +10,8 @@ Unreleased
 
 ### Compatible changes
 
+- New modal default [`up.modal.config.sticky`](/up.modal.config)
+
 
 ### Breaking changes
 

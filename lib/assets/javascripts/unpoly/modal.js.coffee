@@ -510,21 +510,60 @@ up.modal = (($) ->
     $element = $(elementOrSelector)
     $element.closest('.up-modal').length > 0
 
+  ###*
+  Register a new modal flavor that default configuration, CSS and template.
+
+  \#\#\#\# Example
+
+      up.modal.flavor('drawer', {
+        openAnimation: 'move-from-right',
+        closeAnimation: 'move-to-right',
+        maxWidth: 400
+      }
+
+  TODO!
+
+      .up-modal[up-flavor='drawer'] {
+
+        // Align drawer on the right
+        .up-modal-viewport { text-align: right; }
+
+        // Remove modal margin to move drawer to corner of the screen
+        .up-modal-dialog { margin: 0; }
+
+        // Stretch drawer background to full window height
+        .up-modal-content { min-height: 100vh; }
+      }
+
+  @function up.modal.flavor
+  @param {String} name
+    The name of the new flavor.
+  @param {Object} [overrideConfig]
+    An object whose properties override the defaults in [`/up.modal.config`](/up.modal.config).
+  @internal
+  ###
   flavor = (name, overrideConfig = {}) ->
-    config.flavors[name] ||= {}
-    u.extend(config.flavors[name], overrideConfig)
+    u.extend(flavorOverrides(name), overrideConfig)
+
+  ###*
+  Returns a config object for the given flavor.
+  Properties in that config should be preferred to the defaults in
+  [`/up.modal.config`](/up.modal.config).
+
+  @function flavorOverrides
+  @internal
+  ###
+  flavorOverrides = (flavor) ->
+    config.flavors[flavor] ||= {}
 
   ###*
   Returns the config option for the current flavor.
 
-  @function evalConfig
+  @function flavorDefault
   @internal
   ###
   flavorDefault = (key) ->
-    console.debug('--- default for %o', key)
-    if u.contains(key, 'animation')
-      console.debug('--- Grepping config %o (flavor %o) for key %o, currentFlavor is %o', config, config.flavors[currentFlavor], key, currentFlavor)
-    value = config.flavors[currentFlavor][key] if currentFlavor
+    value = flavorOverrides(currentFlavor)[key] if currentFlavor
     value = config[key] if u.isMissing(value)
     value
 
