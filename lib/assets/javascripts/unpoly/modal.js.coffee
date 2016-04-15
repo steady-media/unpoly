@@ -224,7 +224,7 @@ up.modal = (($) ->
     $body = $('body')
     $body.addClass('up-modal-ready')
 
-    if $body.is('.up-has-scrollbar')
+    if u.documentHasVerticalScrollbar()
       scrollbarWidth = u.scrollbarWidth()
       bodyRightPadding = parseInt($body.css('padding-right'))
       bodyRightShift = scrollbarWidth + bodyRightPadding
@@ -250,7 +250,7 @@ up.modal = (($) ->
 
   # Reverts the effects of `shiftElements`.
   unshiftElements = ->
-    $('body').removeClass('up-modal-ready')
+    # $('body').removeClass('up-modal-ready')
     unshifter() while unshifter = unshifters.pop()
 
   ###*
@@ -408,19 +408,18 @@ up.modal = (($) ->
         else
           promise = up.replace(target, url, extractOptions)
         promise = promise.then ->
-          $('body').toggleClass('up-has-scrollbar', u.documentHasVerticalScrollbar())
+          shiftElements()
 
         # If we're not animating the dialog, don't animate the backdrop either
         unless up.motion.isNone(options.animation)
           promise = promise.then ->
+            $('.up-modal').addClass('up-modal-animating')
             $.when(
               up.animate($('.up-modal-backdrop'), options.backdropAnimation, animateOptions),
               up.animate($('.up-modal-viewport'), options.animation, animateOptions)
             )
         promise = promise.then ->
-          # Wait until now to give .up-modal-viewport vertical scrollbars.
-          # If we did this before, a zoom-in animation would transform the scrollbars.
-          shiftElements()
+          $('.up-modal').removeClass('up-modal-animating')
           up.emit('up:modal:opened', message: 'Modal opened')
         promise
       else
@@ -464,7 +463,6 @@ up.modal = (($) ->
     $modal = $('.up-modal')
     if $modal.length
       if up.bus.nobodyPrevents('up:modal:close', $element: $modal, message: 'Closing modal')
-        unshiftElements()
         viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
         backdropCloseAnimation = u.option(options.backdropAnimation, flavorDefault('backdropCloseAnimation'))
         animateOptions = up.motion.animateOptions(options, duration: flavorDefault('closeDuration'), easing: flavorDefault('closeEasing'))
@@ -473,6 +471,7 @@ up.modal = (($) ->
           # If we're not animating the dialog, don't animate the backdrop either
           promise = u.resolvedPromise()
         else
+          $modal.addClass('up-modal-animating')
           promise = $.when(
             up.animate($('.up-modal-viewport'), viewportCloseAnimation, animateOptions),
             up.animate($('.up-modal-backdrop'), backdropCloseAnimation, animateOptions)
@@ -492,6 +491,8 @@ up.modal = (($) ->
           return up.destroy($modal, destroyOptions)
 
         promise = promise.then ->
+          $modal.removeClass('up-modal-animating')
+          unshiftElements()
           currentFlavor = undefined
           up.emit('up:modal:closed', message: 'Modal closed')
 

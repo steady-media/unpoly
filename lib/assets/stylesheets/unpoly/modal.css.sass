@@ -23,13 +23,7 @@ $close-font-size: 34px
   bottom: 0
   right: 0
   z-index: $stratum
-
-  body:not(.up-has-scrollbar) &
-    // If the body has no own scrollbar, we give the .up-modal container
-    // a scrollbar. Since the .up-modal-viewport will always have a scrollbar
-    // once it is done opening, this prevents the modal "jumping" on a scrollbar-less
-    // document.
-    overflow-y: scroll
+  overflow-x: hidden
 
 .up-modal-backdrop
   z-index: $substratum-backdrop
@@ -48,21 +42,22 @@ $close-font-size: 34px
   right: 0
   z-index: $substratum-elements
   overflow-x: hidden
-  overflow-y: hidden
+  overflow-y: scroll
   // We prefer centering the dialog as an `inline-block`
   // to giving it a horizontal margin of `auto`. This way
   // the width of `.up-modal-dialog` is controlled by the
   // contents of `.up-modal-content`.
   text-align: center
 
-body.up-modal-ready
-  .up-modal
-    overflow-y: hidden
-  .up-modal-viewport
-    // Only when the modal is done animating we move the scrollbar to
-    // the viewport. If the viewport had a scrollbar while animating with
-    // "zoom-in" it would look strange that the scrollbar is zooming in.
+.up-modal.up-modal-animating
+  // During opening/closing animations we let the .up-modal container take over
+  // the scrollbars that would usually be owned by .up-modal-viewport.
+  // If .up-modal-viewport had a scrollbar while animating with
+  // "zoom-in" it would look strange that the scrollbar is scaled.
+  &
     overflow-y: scroll
+  .up-modal-viewport
+    overflow-y: hidden
 
 .up-modal-dialog
   z-index: $substratum-dialog
