@@ -85,7 +85,7 @@ describe 'up.modal', ->
             expect(parseInt($anchoredElement.css('right'))).toBeAround(30 , 10)
             done()
 
-      describe 'when opening another modal if a modal exists', ->
+      describe 'opening a modal while another modal is open', ->
 
         it 'does not open multiple modals or pad the body twice if the user starts loading a second modal before the first was done loading', (done) ->
           up.modal.config.closeDuration = 10

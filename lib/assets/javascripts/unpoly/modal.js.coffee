@@ -6,7 +6,7 @@ Instead of [linking to a page fragment](/up.link), you can choose
 to show a fragment in a modal dialog. The existing page will remain
 open in the background and reappear once the modal is closed.
 
-To open a modal, add an [`up-modal` attribute](/a-up-modal) to a link,
+To open a modal, add an [`up-modal` attribute](/up-modal) to a link,
 or call the Javascript functions [`up.modal.follow`](/up.modal.follow)
 and [`up.modal.visit`](/up.modal.visit).
   
@@ -122,10 +122,10 @@ up.modal = (($) ->
     history: true
     openAnimation: 'fade-in'
     closeAnimation: 'fade-out'
-    closeDuration: null
-    closeEasing: null
     openDuration: null
+    closeDuration: null
     openEasing: null
+    closeEasing: null
     backdropOpenAnimation: 'fade-in'
     backdropCloseAnimation: 'fade-out'
     closeLabel: '×'
@@ -373,7 +373,7 @@ up.modal = (($) ->
     options = u.options(options)
     $link = u.option(u.pluckKey(options, '$link'), u.nullJQuery())
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
-    html = u.pluckKey(options, 'html')
+    html = u.option(u.pluckKey(options, 'html'))
     target = u.option(u.pluckKey(options, 'target'), $link.attr('up-modal'), 'body')
     options.flavor = u.option(options.flavor, $link.attr('up-flavor'))
     options.width = u.option(options.width, $link.attr('up-width'), flavorDefault('width', options.flavor))
@@ -396,10 +396,10 @@ up.modal = (($) ->
         console.debug("opening modal with options %o", options)
         options.beforeSwap = -> createFrame(target, options)
         extractOptions = u.merge(options, animation: false)
-        if url
-          promise = up.replace(target, url, extractOptions)
-        else
+        if html
           promise = up.extract(target, html, extractOptions)
+        else
+          promise = up.replace(target, url, extractOptions)
         # If we're not animating the dialog, don't animate the backdrop either
         unless up.motion.isNone(options.animation)
           promise = promise.then ->
@@ -490,12 +490,11 @@ up.modal = (($) ->
 
         promise
       else
-        # Although someone prevented the destruction,
-        # keep a uniform API for callers by returning
-        # a Deferred that will never be resolved.
-        u.unresolvableDeferred()
+        # Although someone prevented the destruction, keep a uniform API
+        # for callers by returning a promise that will never be resolved.
+        u.unresolvablePromise()
     else
-      u.resolvedDeferred()
+      u.resolvedPromise()
 
   ###*
   This event is [emitted](/up.emit) when a modal dialog
@@ -605,7 +604,7 @@ up.modal = (($) ->
   and place the matching `.blog-list` tag will be placed in
   a modal dialog.
 
-  @selector a[up-modal]
+  @selector [up-modal]
   @param {String} [up-confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the modal is opened.
@@ -619,11 +618,12 @@ up.modal = (($) ->
   @param {String} [up-height]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
-  @param [up-width]
+  @param {String} [up-width]
     The width of the dialog in pixels.
     By [default](/up.modal.config) the dialog will grow to fit its contents.
-  @param [up-history="true"]
+  @param {String} [up-history="true"]
     Whether to add a browser history entry for the modal's source URL.
+
   @stable
   ###
   up.link.onAction '[up-modal]', ($link) ->
