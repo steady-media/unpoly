@@ -219,11 +219,12 @@ up.modal = (($) ->
   # This is screwed up, but Bootstrap does the same.
   shiftElements = ->
     return if unshifters.length > 0
-    $('.up-modal').addClass('up-modal-ready')
 
+    $modal = $('.up-modal')
     $body = $('body')
+    $body.addClass('up-modal-ready')
 
-    if u.documentHasVerticalScrollbar($body)
+    if $body.is('.up-has-scrollbar')
       scrollbarWidth = u.scrollbarWidth()
       bodyRightPadding = parseInt($body.css('padding-right'))
       bodyRightShift = scrollbarWidth + bodyRightPadding
@@ -239,9 +240,17 @@ up.modal = (($) ->
         unshifter = u.temporaryCss($element, 'right': elementRightShift)
         unshifters.push(unshifter)
 
+#    else
+#      $viewport = $modal.find('.up-modal-viewport')
+#      viewportRightPadding = parseInt($viewport.css('padding-right'))
+#      viewportRightShift = scrollbarWidth + viewportRightPadding
+#      unshiftViewport = u.temporaryCss($viewport, 'padding-right': "#{viewportRightShift}px")
+#      debugger
+#      unshifters.push(unshiftViewport)
+
   # Reverts the effects of `shiftElements`.
   unshiftElements = ->
-    $('.up-modal').removeClass('up-modal-ready')
+    $('body').removeClass('up-modal-ready')
     unshifter() while unshifter = unshifters.pop()
 
   ###*
@@ -398,6 +407,9 @@ up.modal = (($) ->
           promise = up.extract(target, html, extractOptions)
         else
           promise = up.replace(target, url, extractOptions)
+        promise = promise.then ->
+          $('body').toggleClass('up-has-scrollbar', u.documentHasVerticalScrollbar())
+
         # If we're not animating the dialog, don't animate the backdrop either
         unless up.motion.isNone(options.animation)
           promise = promise.then ->
@@ -406,6 +418,8 @@ up.modal = (($) ->
               up.animate($('.up-modal-viewport'), options.animation, animateOptions)
             )
         promise = promise.then ->
+          # Wait until now to give .up-modal-viewport vertical scrollbars.
+          # If we did this before, a zoom-in animation would transform the scrollbars.
           shiftElements()
           up.emit('up:modal:opened', message: 'Modal opened')
         promise
