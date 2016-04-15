@@ -187,21 +187,31 @@ up.modal = (($) ->
     $modal.removeAttr('up-covered-title')
 
   createFrame = (target, options) ->
-    $modal = $(templateHtml())
-    $modal.attr('up-flavor', currentFlavor)
-    $modal.attr('up-sticky', '') if options.sticky
-    $modal.attr('up-covered-url', up.browser.url())
-    $modal.attr('up-covered-title', document.title)
-    $dialog = $modal.find('.up-modal-dialog')
-    $dialog.css('width', options.width) if u.isPresent(options.width)
-    $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
-    $dialog.css('height', options.height) if u.isPresent(options.height)
-    $content = $modal.find('.up-modal-content')
-    # Create an empty element that will match the
-    # selector that is being replaced.
-    u.$createPlaceholder(target, $content)
-    $modal.appendTo(document.body)
-    $modal
+    promise = u.resolvedPromise()
+    console.debug('~~~ createFrame with %o / %o', target, options)
+    if isOpen()
+      console.debug('~~~ isOpen, closing')
+      promise = promise.then -> close()
+    promise = promise.then ->
+      console.debug('~~~ renddering the frame for flavor %o', options.flavor)
+      currentFlavor = options.flavor
+      $modal = $(templateHtml())
+      $modal.attr('up-flavor', currentFlavor)
+      $modal.attr('up-sticky', '') if options.sticky
+      $modal.attr('up-covered-url', up.browser.url())
+      $modal.attr('up-covered-title', document.title)
+      $dialog = $modal.find('.up-modal-dialog')
+      $dialog.css('width', options.width) if u.isPresent(options.width)
+      $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
+      $dialog.css('height', options.height) if u.isPresent(options.height)
+      $content = $modal.find('.up-modal-content')
+      # Create an empty element that will match the
+      # selector that is being replaced.
+      u.$createPlaceholder(target, $content)
+      $modal.appendTo(document.body)
+      console.debug('~~~ // createFrame is done')
+    return promise
+
   unshifters = []
 
   # Gives `<body>` a right padding in the width of a scrollbar.
@@ -212,8 +222,7 @@ up.modal = (($) ->
   # modal overlay, which has its own scroll bar.
   # This is screwed up, but Bootstrap does the same.
   shiftElements = ->
-    if unshifters.length
-      u.error('Tried to call shiftElements multiple times %o', unshifters.length)
+    return if unshifters.length > 0
     $('.up-modal').addClass('up-modal-ready')
     scrollbarWidth = u.scrollbarWidth()
     bodyRightPadding = parseInt($('body').css('padding-right'))
@@ -237,6 +246,8 @@ up.modal = (($) ->
 
   ###*
   Returns whether a modal is currently open.
+
+  This also returns `true` if the modal is in an opening or closing animation.
 
   @function up.modal.isOpen
   @stable
@@ -358,31 +369,31 @@ up.modal = (($) ->
   @internal
   ###
   open = (options) ->
+    console.debug('~~~ Open with %o', options)
     options = u.options(options)
     $link = u.option(u.pluckKey(options, '$link'), u.nullJQuery())
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
     html = u.pluckKey(options, 'html')
     target = u.option(u.pluckKey(options, 'target'), $link.attr('up-modal'), 'body')
-    currentFlavor = u.option(options.flavor, $link.attr('up-flavor'), 'default')
-    options.width = u.option(options.width, $link.attr('up-width'), flavorDefault('width'))
-    options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), flavorDefault('maxWidth'))
+    options.flavor = u.option(options.flavor, $link.attr('up-flavor'))
+    options.width = u.option(options.width, $link.attr('up-width'), flavorDefault('width', options.flavor))
+    options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), flavorDefault('maxWidth', options.flavor))
     options.height = u.option(options.height, $link.attr('up-height'), flavorDefault('height'))
-    options.animation = u.option(options.animation, $link.attr('up-animation'), flavorDefault('openAnimation'))
-    options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), flavorDefault('backdropOpenAnimation'))
-    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'), flavorDefault('sticky'))
+    options.animation = u.option(options.animation, $link.attr('up-animation'), flavorDefault('openAnimation', options.flavor))
+    options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), flavorDefault('backdropOpenAnimation', options.flavor))
+    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'), flavorDefault('sticky', options.flavor))
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
-    animateOptions = up.motion.animateOptions(options, $link, duration: flavorDefault('openDuration'), easing: flavorDefault('openEasing'))
+    animateOptions = up.motion.animateOptions(options, $link, duration: flavorDefault('openDuration', options.flavor), easing: flavorDefault('openEasing', options.flavor))
 
     # Although we usually fall back to full page loads if a browser doesn't support pushState,
     # in the case of modals we assume that the developer would rather see a dialog
     # without an URL update.
-    options.history = u.option(options.history, u.castedAttr($link, 'up-history'), flavorDefault('history'))
+    options.history = u.option(options.history, u.castedAttr($link, 'up-history'), flavorDefault('history', options.flavor))
     options.history = false unless up.browser.canPushState()
 
     up.browser.confirm(options).then ->
       if up.bus.nobodyPrevents('up:modal:open', url: url, message: 'Opening modal')
-        wasOpen = isOpen()
-        close(animation: false) if wasOpen
+        console.debug("opening modal with options %o", options)
         options.beforeSwap = -> createFrame(target, options)
         extractOptions = u.merge(options, animation: false)
         if url
@@ -390,8 +401,9 @@ up.modal = (($) ->
         else
           promise = up.extract(target, html, extractOptions)
         # If we're not animating the dialog, don't animate the backdrop either
-        unless wasOpen || up.motion.isNone(options.animation)
+        unless up.motion.isNone(options.animation)
           promise = promise.then ->
+            console.debug('*** Starting open animations %o', options.animation)
             $.when(
               up.animate($('.up-modal-backdrop'), options.backdropAnimation, animateOptions),
               up.animate($('.up-modal-viewport'), options.animation, animateOptions)
@@ -437,6 +449,7 @@ up.modal = (($) ->
   @stable
   ###
   close = (options) ->
+    console.debug('~~~ Closing with %o', options)
     options = u.options(options)
     $modal = $('.up-modal')
     if $modal.length
@@ -445,6 +458,9 @@ up.modal = (($) ->
         viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
         backdropCloseAnimation = u.option(options.backdropAnimation, flavorDefault('backdropCloseAnimation'))
         animateOptions = up.motion.animateOptions(options, duration: flavorDefault('closeDuration'), easing: flavorDefault('closeEasing'))
+
+        console.debug(">>> close() with viewportCloseAnimation %o and animateOptions %o", viewportCloseAnimation, animateOptions)
+
         if up.motion.isNone(viewportCloseAnimation)
           # If we're not animating the dialog, don't animate the backdrop either
           promise = u.resolvedPromise()
@@ -453,6 +469,7 @@ up.modal = (($) ->
             up.animate($('.up-modal-viewport'), viewportCloseAnimation, animateOptions),
             up.animate($('.up-modal-backdrop'), backdropCloseAnimation, animateOptions)
           )
+
         promise = promise.then ->
           destroyOptions = u.options(
             u.except(options, 'animation', 'duration', 'easing', 'delay'),
@@ -463,9 +480,14 @@ up.modal = (($) ->
           # since up.navigation listens to up:fragment:destroyed and then
           # re-assigns .up-current classes.
           currentUrl = undefined
-          up.destroy($modal, destroyOptions)
+
+          console.debug("up.destroy for modal")
+          return up.destroy($modal, destroyOptions)
+
+        promise = promise.then ->
           currentFlavor = undefined
           up.emit('up:modal:closed', message: 'Modal closed')
+
         promise
       else
         # Although someone prevented the destruction,
@@ -565,8 +587,8 @@ up.modal = (($) ->
   @function flavorDefault
   @internal
   ###
-  flavorDefault = (key) ->
-    value = flavorOverrides(currentFlavor)[key] if currentFlavor
+  flavorDefault = (key, flavorName = currentFlavor) ->
+    value = flavorOverrides(flavorName)[key] if flavorName
     value = config[key] if u.isMissing(value)
     value
 

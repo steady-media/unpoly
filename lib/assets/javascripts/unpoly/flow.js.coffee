@@ -202,11 +202,14 @@ up.flow = (($) ->
 
     promise = up.ajax(request)
 
-    promise.done (html, textStatus, xhr) ->
+    onSuccess = (html, textStatus, xhr) ->
       processResponse(true, target, url, request, xhr, options)
 
-    promise.fail (xhr, textStatus, errorThrown) ->
+    onFailure = (xhr, textStatus, errorThrown) ->
       processResponse(false, failTarget, url, request, xhr, options)
+
+    promise = promise.then(onSuccess, onFailure)
+
     promise
 
   ###*
@@ -308,21 +311,24 @@ up.flow = (($) ->
 
       up.layout.saveScroll() unless options.saveScroll == false
 
-      options.beforeSwap?()
-      deferreds = []
+      promise = u.resolvedPromise()
+      console.debug("Calling beforeSwap %o", options.beforeSwap) if options.beforeSwap
+      promise = promise.then(options.beforeSwap) if options.beforeSwap
+      promise = promise.then -> updateHistory(options)
+      promise = promise.then ->
+        swapPromises = []
+        for step in parseImplantSteps(selector, options)
+          up.log.group 'Updating %s', step.selector, ->
+            $old = findOldFragment(step.selector, options)
+            $new = response.find(step.selector)?.first()
+            if $old && $new
+              swapPromise = swapElements($old, $new, step.pseudoClass, step.transition, options)
+              swapPromises.push(swapPromise)
+        # Delay all further links in the promise chain until all fragments have been swapped
+        return $.when(swapPromises...)
+      promise = promise.then(options.afterSwap) if options.afterSwap
+      promise
 
-      updateHistory(options)
-
-      for step in parseImplantSteps(selector, options)
-        up.log.group 'Updating %s', step.selector, ->
-          $old = findOldFragment(step.selector, options)
-          $new = response.find(step.selector)?.first()
-          if $old && $new
-            deferred = swapElements($old, $new, step.pseudoClass, step.transition, options)
-            deferreds.push(deferred)
-
-      options.afterSwap?()
-      up.motion.when(deferreds...)
 
   findOldFragment = (selector, options) ->
     # Prefer to replace fragments in an open popup or modal
@@ -718,7 +724,7 @@ up.flow = (($) ->
   destroy = (selectorOrElement, options) ->
 
     $element = $(selectorOrElement)
-    unless $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
+    unless false && $element.is('.up-placeholder, .up-tooltip, .up-modal, .up-popup')
       destroyMessage = ['Destroying fragment %o', $element.get(0)]
       destroyedMessage = ['Destroyed fragment %o', $element.get(0)]
     if $element.length == 0
