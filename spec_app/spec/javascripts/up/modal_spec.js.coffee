@@ -188,7 +188,6 @@ describe 'up.modal', ->
 
           animations = []
           spyOn(up, 'animate').and.callFake ($element, animation, options) ->
-            console.debug("Animate with %o", $element.get(0).outerHTML)
             if $element.is('.up-modal-viewport')
               animations.push
                 text: u.trim($element.find('.target').text())

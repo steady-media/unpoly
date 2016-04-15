@@ -312,7 +312,6 @@ up.flow = (($) ->
       up.layout.saveScroll() unless options.saveScroll == false
 
       promise = u.resolvedPromise()
-      console.debug("Calling beforeSwap %o", options.beforeSwap) if options.beforeSwap
       promise = promise.then(options.beforeSwap) if options.beforeSwap
       promise = promise.then -> updateHistory(options)
       promise = promise.then ->

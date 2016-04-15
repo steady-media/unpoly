@@ -188,12 +188,9 @@ up.modal = (($) ->
 
   createFrame = (target, options) ->
     promise = u.resolvedPromise()
-    console.debug('~~~ createFrame with %o / %o', target, options)
     if isOpen()
-      console.debug('~~~ isOpen, closing')
       promise = promise.then -> close()
     promise = promise.then ->
-      console.debug('~~~ renddering the frame for flavor %o', options.flavor)
       currentFlavor = options.flavor
       $modal = $(templateHtml())
       $modal.attr('up-flavor', currentFlavor)
@@ -209,7 +206,6 @@ up.modal = (($) ->
       # selector that is being replaced.
       u.$createPlaceholder(target, $content)
       $modal.appendTo(document.body)
-      console.debug('~~~ // createFrame is done')
     return promise
 
   unshifters = []
@@ -369,7 +365,6 @@ up.modal = (($) ->
   @internal
   ###
   open = (options) ->
-    console.debug('~~~ Open with %o', options)
     options = u.options(options)
     $link = u.option(u.pluckKey(options, '$link'), u.nullJQuery())
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
@@ -393,7 +388,6 @@ up.modal = (($) ->
 
     up.browser.confirm(options).then ->
       if up.bus.nobodyPrevents('up:modal:open', url: url, message: 'Opening modal')
-        console.debug("opening modal with options %o", options)
         options.beforeSwap = -> createFrame(target, options)
         extractOptions = u.merge(options, animation: false)
         if html
@@ -403,7 +397,6 @@ up.modal = (($) ->
         # If we're not animating the dialog, don't animate the backdrop either
         unless up.motion.isNone(options.animation)
           promise = promise.then ->
-            console.debug('*** Starting open animations %o', options.animation)
             $.when(
               up.animate($('.up-modal-backdrop'), options.backdropAnimation, animateOptions),
               up.animate($('.up-modal-viewport'), options.animation, animateOptions)
@@ -449,7 +442,6 @@ up.modal = (($) ->
   @stable
   ###
   close = (options) ->
-    console.debug('~~~ Closing with %o', options)
     options = u.options(options)
     $modal = $('.up-modal')
     if $modal.length
@@ -458,8 +450,6 @@ up.modal = (($) ->
         viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
         backdropCloseAnimation = u.option(options.backdropAnimation, flavorDefault('backdropCloseAnimation'))
         animateOptions = up.motion.animateOptions(options, duration: flavorDefault('closeDuration'), easing: flavorDefault('closeEasing'))
-
-        console.debug(">>> close() with viewportCloseAnimation %o and animateOptions %o", viewportCloseAnimation, animateOptions)
 
         if up.motion.isNone(viewportCloseAnimation)
           # If we're not animating the dialog, don't animate the backdrop either
@@ -481,7 +471,6 @@ up.modal = (($) ->
           # re-assigns .up-current classes.
           currentUrl = undefined
 
-          console.debug("up.destroy for modal")
           return up.destroy($modal, destroyOptions)
 
         promise = promise.then ->

@@ -1006,7 +1006,6 @@ up.util = (($) ->
   finishCssAnimate = (elementOrSelector) ->
     $(elementOrSelector).each ->
       if existingAnimation = pluckData(this, ANIMATION_DEFERRED_KEY)
-        console.debug("*** finishing cssAnimate on %o", this)
         existingAnimation.resolve()
 
   ###*
