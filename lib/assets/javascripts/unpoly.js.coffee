@@ -17,4 +17,4 @@
 #= require unpoly/navigation
 #= require unpoly/rails
 
-$(up.boot)
+up.boot()

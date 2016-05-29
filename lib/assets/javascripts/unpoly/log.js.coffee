@@ -27,15 +27,12 @@ up.log = (($) ->
     prints to the developer console.
   @param {String} [options.prefix='[UP] ']
     A string to prepend to Unpoly's logging messages so you can distinguish it from your own messages.
-  @param {Boolean} [options.banner=true]
-    Whether Unpoly prints an ASCII art banner when booting.
   @stable
   ###
   config = u.config
     prefix: '[UP] '
-    enabled: true
+    enabled: false
     collapse: false
-    banner: true
 
   reset = ->
     config.reset()
@@ -103,18 +100,17 @@ up.log = (($) ->
       up.browser.puts('error', prefix(message), args...)
 
   printBanner = ->
-    if config.banner
-      # The ASCII art looks broken in code since we need to escape backslashes
-      banner = " __ _____  ___  ___  / /_ __\n" +
-               "/ // / _ \\/ _ \\/ _ \\/ / // /  #{up.version}\n" +
-               "\\___/_//_/ .__/\\___/_/\\_. / \n" +
-               "        /_/          /___/\n" +
-               "\n"
-      if config.enabled
-        banner += "Call `up.log.disable()` to disable debugging output."
-      else
-        banner += "Call `up.log.enable()` to enable debugging output."
-      up.browser.puts('log', banner)
+    # The ASCII art looks broken in code since we need to escape backslashes
+    banner = " __ _____  ___  ___  / /_ __\n" +
+             "/ // / _ \\/ _ \\/ _ \\/ / // /  #{up.version}\n" +
+             "\\___/_//_/ .__/\\___/_/\\_. / \n" +
+             "        / /            / /\n" +
+             "\n"
+    if config.enabled
+      banner += "Call `up.log.disable()` to disable debugging output."
+    else
+      banner += "Call `up.log.enable()` to enable debugging output."
+    up.browser.puts('log', banner)
 
   up.on 'up:framework:boot', printBanner
   up.on 'up:framework:reset', reset
