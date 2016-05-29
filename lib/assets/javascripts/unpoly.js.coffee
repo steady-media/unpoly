@@ -18,4 +18,3 @@
 #= require unpoly/rails
 
 $(up.boot)
-

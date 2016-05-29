@@ -33,7 +33,7 @@ up.log = (($) ->
   ###
   config = u.config
     prefix: '[UP] '
-    enabled: false
+    enabled: true
     collapse: false
     banner: true
 

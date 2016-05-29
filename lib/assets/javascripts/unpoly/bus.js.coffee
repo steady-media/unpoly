@@ -403,7 +403,7 @@ up.bus = (($) ->
   @experimental
   ###
 
-  live 'up:framework:boot', snapshot
+  live 'up:framework:booted', snapshot
   live 'up:framework:reset', restoreSnapshot
 
   knife: eval(Knife?.point)
