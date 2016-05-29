@@ -389,6 +389,12 @@ up.bus = (($) ->
       # up.browser.isSupported() and up.browser would require up.on()
       up.browser.installPolyfills()
       up.emit('up:framework:boot', message: 'Booting framework')
+      up.emit('up:framework:booted', message: 'Framework booted')
+      u.nextFrame ->
+        # User code being loaded
+        $ ->
+          # User code that's somehow wrapped in $() being loaded
+          up.emit('up:application:ready', message: 'Application ready')
 
   ###*
   This event is [emitted](/up.emit) when Unpoly [boots](/up.boot).

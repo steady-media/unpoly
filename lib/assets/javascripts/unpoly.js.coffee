@@ -1,8 +1,8 @@
 #= require unpoly/module
 #= require unpoly/util
-#= require unpoly/log
 #= require unpoly/browser
 #= require unpoly/bus
+#= require unpoly/log
 #= require unpoly/syntax
 #= require unpoly/history
 #= require unpoly/layout
@@ -17,4 +17,5 @@
 #= require unpoly/navigation
 #= require unpoly/rails
 
-up.boot()
+$(up.boot)
+
