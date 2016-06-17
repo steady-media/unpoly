@@ -1748,6 +1748,48 @@ up.util = (($) ->
     # This is by far the fastest way to do this
     not jQuery.contains(document.documentElement, element)
 
+  diagonalQuadrant = (element) ->
+    center = boundingClientRectCenter(element)
+    screen = clientSize()
+    slope = screen.height / screen.width
+    edge = center.left * slope
+    leftOrBottom = (center.top > edge)
+    leftOrTop = (center.top < -edge + screen.height)
+    if leftOrBottom
+      if leftOrTop
+        'left'
+      else
+        'bottom'
+    else
+      if leftOrTop
+        'top'
+      else
+        'right'
+
+  rectangularQuadrant = (element) ->
+    center = boundingClientRectCenter(element)
+    screen = clientSize()
+
+    console.log("Center is %o, screen is %o", center, screen)
+
+    if center.top < screen.height * 0.5
+      vertical = 'top'
+    else
+      vertical = 'bottom'
+    if center.left < screen.width * 0.5
+      horizontal = 'left'
+    else
+      horizontal = 'right'
+    "#{vertical}-#{horizontal}"
+
+  boundingClientRectCenter = (element) ->
+    element = unJQuery(element)
+    rectCenter(element.getBoundingClientRect())
+
+  rectCenter = (rect) ->
+    left: rect.left + 0.5 * rect.width
+    top: rect.top + 0.5 * rect.height
+
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -1853,6 +1895,8 @@ up.util = (($) ->
   whenReady: whenReady
   identity: identity
   escapeHtml: escapeHtml
+  diagonalQuadrant: diagonalQuadrant
+  rectangularQuadrant: rectangularQuadrant
 
 )($)
 

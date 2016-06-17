@@ -66,6 +66,8 @@ up.tooltip = (($) ->
     else
       linkBox = u.measure($link)
 
+    position = evaluatePosition(position, $link)
+
     switch position
       when "top"
         css['top'] = linkBox.top - tooltipBox.height
@@ -84,6 +86,22 @@ up.tooltip = (($) ->
 
     $tooltip.attr('up-position', position)
     $tooltip.css(css)
+
+  evaluatePosition = (position, $link) ->
+    if position == 'auto'
+      quadrant = u.diagonalQuadrant($link)
+      switch quadrant
+        when 'top' then 'bottom'
+        when 'right' then 'left'
+        when 'bottom' then 'top'
+        when 'left' then 'right'
+    else
+      position
+
+#  fixPosition = (initialPosition) ->
+#    box = $tooltip.get(0).getBoundingClientRect()
+#    if initialPosition == 'top' && box.top < 0
+#      assignPosition('bottom')
 
   createElement = (options) ->
     $element = u.$createElementFromSelector('.up-tooltip')

@@ -1,6 +1,96 @@
 describe 'up.util', ->
+
+  u = up.util
   
   describe 'Javascript functions', ->
+
+    describe 'up.util.rectangularQuadrant', ->
+
+      beforeEach ->
+        @restoreBodyHeight = u.temporaryCss('body', 'min-height': '6000px')
+        # Let's test the harder case where the document is scrolled
+        up.layout.scroll(document, 3000)
+        @$element = affix('.element').css
+          'width': '2px'
+          'height': '2px'
+          'background-color': 'red'
+          'position': 'fixed'
+
+      afterEach ->
+        @restoreBodyHeight()
+
+      it 'returns "top-right" for an element in the top right corner', ->
+        @$element.css
+          'top': '50px'
+          'right': '50px'
+        quadrant = up.util.rectangularQuadrant(@$element)
+        expect(quadrant).toEqual('top-right')
+
+      it 'returns "bottom-right" for an element in the bottom right corner', ->
+        @$element.css
+          'bottom': '50px'
+          'right': '50px'
+        quadrant = up.util.rectangularQuadrant(@$element)
+        expect(quadrant).toEqual('bottom-right')
+
+      it 'returns "bottom-left" for an element in the bottom left corner', ->
+        @$element.css
+          'bottom': '50px'
+          'left': '50px'
+        quadrant = up.util.rectangularQuadrant(@$element)
+        expect(quadrant).toEqual('bottom-left')
+
+      it 'returns "bottom-left" for an element in the top left corner', ->
+        @$element.css
+          'top': '50px'
+          'left': '50px'
+        quadrant = up.util.rectangularQuadrant(@$element)
+        expect(quadrant).toEqual('top-left')
+
+
+    describe 'up.util.diagonalQuadrant', ->
+
+      beforeEach ->
+        @restoreBodyHeight = u.temporaryCss('body', 'min-height': '6000px')
+        # Let's test the harder case where the document is scrolled
+        up.layout.scroll(document, 3000)
+        @$element = affix('.element').css
+          'width': '2px'
+          'height': '2px'
+          'background-color': 'red'
+          'position': 'fixed'
+
+      afterEach ->
+        @restoreBodyHeight()
+
+      it 'returns "top" for an element in the top center', ->
+        @$element.css
+          'top': '50px'
+          'left': "#{u.clientSize().width * 0.5}px"
+        quadrant = up.util.diagonalQuadrant(@$element)
+        expect(quadrant).toEqual('top')
+
+      it 'returns "right" for an element in the right center', ->
+        @$element.css
+          'right': '50px'
+          'top': "#{u.clientSize().height * 0.5}px"
+        quadrant = up.util.diagonalQuadrant(@$element)
+        expect(quadrant).toEqual('right')
+
+      it 'returns "bottom" for an element in the bottom center', ->
+        @$element.css
+          'bottom': '50px'
+          'left': "#{u.clientSize().width * 0.5}px"
+        quadrant = up.util.diagonalQuadrant(@$element)
+        expect(quadrant).toEqual('bottom')
+
+      it 'returns "left" for an element in the left center', ->
+        @$element.css
+          'left': '50px'
+          'top': "#{u.clientSize().height * 0.5}px"
+        quadrant = up.util.diagonalQuadrant(@$element)
+        expect(quadrant).toEqual('left')
+
 
     describe 'up.util.isFixed', ->
 

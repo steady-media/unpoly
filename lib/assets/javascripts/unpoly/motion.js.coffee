@@ -485,12 +485,12 @@ up.motion = (($) ->
 
   Here is the definition of the pre-defined `cross-fade` animation:
 
-      up.transition('cross-fade', ($old, $new, options) ->
+      up.transition('cross-fade', function($old, $new, options) {
         up.motion.when(
           up.animate($old, 'fade-out', options),
           up.animate($new, 'fade-in', options)
-        )
-      )
+        );
+      });
 
   It is recommended that your transitions use [`up.animate`](/up.animate),
   passing along the `options` that were passed to you.
@@ -521,8 +521,8 @@ up.motion = (($) ->
   Here is the definition of the pre-defined `fade-in` animation:
 
       up.animation('fade-in', function($element, options) {
-        $element.css(opacity: 0);
-        up.animate($ghost, { opacity: 1 }, options);
+        $element.css({ opacity: 0 });
+        up.animate($element, { opacity: 1 }, options);
       })
 
   It is recommended that your definitions always end by calling
