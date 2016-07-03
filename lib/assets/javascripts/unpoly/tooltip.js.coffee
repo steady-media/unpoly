@@ -68,13 +68,13 @@ up.tooltip = (($) ->
     $anchor: null        # the element to which the tooltip is anchored
     $tooltip: null       # the tooltiop element
     position: null       # the position of the tooltip element relative to its anchor
-    whenActionDone: null # a promise for the current opening/closing animation's end
-    nextAction: null     # a function that will be called when the current action completes
+    chain: new u.DivertibleChain()
 
   reset = ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
     close(animation: false).then ->
       state.reset()
+      state.chain.reset()
       config.reset()
 
   align = ->
@@ -121,7 +121,7 @@ up.tooltip = (($) ->
       up.tooltip.attach('.help', {
         html: 'Enter multiple words or phrases'
       });
-  
+
   @function up.tooltip.attach
   @param {Element|jQuery|String} elementOrSelector
   @param {String} [options.html]
@@ -143,61 +143,26 @@ up.tooltip = (($) ->
     animation = u.option(options.animation, u.castedAttr($anchor, 'up-animation'), config.openAnimation)
     animateOptions = up.motion.animateOptions(options, $anchor, duration: config.openDuration, easing: config.openEasing)
 
-    whenOpened = $.Deferred()
-
-    openNow = ->
+    doOpen = ->
       state.phase = 'opening'
       state.$anchor = $anchor
       state.$tooltip = createElement(text: text, html: html)
       state.position = position
       align()
-      state.whenActionDone = up.animate(state.$tooltip, animation, animateOptions)
-      state.whenActionDone.then ->
+      up.animate(state.$tooltip, animation, animateOptions).then ->
         state.phase = 'opened'
-        whenOpened.resolve()
-        doNextAction()
-        return
 
-    switch state.phase
-      when 'closed'
-        # We don't need to wait for anyone.
-        # We can start the opening animation immediately.
-        openNow()
-      when 'closing'
-        # Someone else has started a closing animation before us.
-        # We schedule ourselves after the closing animation has finished.
-        state.nextAction = openNow
-      when 'opening'
-        # Someone else has started an opening animation before us.
-        # We schedule a closing and then re-opening after the current opening animation has finished.
-        state.nextAction = ->
-          state.nextAction = openNow
-          close()
-      when 'opened'
-        # We are currently showing another tooltip.
-        # We start to close it and schedule re-opening after the closing animation has finished.
-        state.nextAction = openNow
-        close()
+    if isOpen()
+      state.chain.asap(close, doOpen)
+    else
+      state.chain.asap(doOpen)
 
-    whenOpened.promise()
-
-  ###*
-  Perform an action that is scheduled after the current opening or closing has finished.
-  Does nothing if nothing is scheduled.
-
-  @function doNextAction
-  @internal
-  ###
-  doNextAction = ->
-    if state.nextAction
-      action = state.nextAction # give it another name before we set it to undefined
-      state.nextAction = null
-      action()
+    state.chain.promise()
 
   ###*
   Closes a currently shown tooltip.
   Does nothing if no tooltip is currently shown.
-  
+
   @function up.tooltip.close
   @param {Object} options
     See options for [`up.animate`](/up.animate).
@@ -208,43 +173,28 @@ up.tooltip = (($) ->
   close = (options) ->
     options = u.options(options, animation: config.closeAnimation)
     animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
-    options = u.merge(options, animateOptions)
+    u.extend(options, animateOptions)
 
-    whenClosed = undefined
-
-    whenDestroyed = $.Deferred()
-    destroyElement = ->
+    doClose = ->
       state.phase = 'closing'
-      state.whenActionDone = up.destroy(state.$tooltip, options)
-      state.whenActionDone.then ->
+      up.destroy(state.$tooltip, options).then ->
         state.phase = 'closed'
         state.$tooltip = null
         state.$anchor = null
-        whenDestroyed.resolve()
-        doNextAction()
-        return
 
-    switch state.phase
-      when 'closed'
-        # No tooltip is visible.
-        # We do nothing.
-        whenClosed = u.resolvedPromise()
-      when 'closing'
-        # Someone else has started a closing animation before us.
-        # We do nothing.
-        whenClosed = state.whenActionDone
-      when 'opening'
-        # Someone else has started an opening animation before us.
-        # We schedule the closing after the opening animation has finished.
-        state.nextAction = destroyElement
-        whenClosed = whenDestroyed.promise()
-      when 'opened'
-        # A tooltip is currently shown.
-        # We start closing the tooltip.
-        destroyElement()
-        whenClosed = whenDestroyed.promise()
+    if isOpen()
+      state.chain.asap(doClose)
 
-    whenClosed
+    return state.chain.promise()
+
+  ###*
+  Returns whether a tooltip is currently showing.
+
+  @function up.tooltip.isOpen
+  @stable
+  ###
+  isOpen = ->
+    state.phase == 'opening' || state.phase == 'opened'
 
   ###*
   Displays a tooltip with text content when hovering the mouse over this element:

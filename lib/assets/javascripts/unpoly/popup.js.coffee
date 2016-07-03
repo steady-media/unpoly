@@ -65,7 +65,7 @@ up.popup = (($) ->
   @experimental
   ###
   coveredUrl = ->
-    $('.up-popup').attr('up-covered-url')
+    state.$popup?.attr('up-covered-url')
 
   ###*
   Sets default options for future popups.
@@ -104,23 +104,31 @@ up.popup = (($) ->
     position: 'bottom-right'
     history: false
 
-  reset = ->
-    close(animation: false)
-    config.reset()
+  state = u.config
+    phase: 'closed'      # can be 'opening', 'opened', 'closing' and 'closed'
+    $anchor: null        # the element to which the tooltip is anchored
+    $popup: null         # the popup container
+    position: null       # the position of the popup container element relative to its anchor
+    chain: new u.DivertibleChain()
 
-  setPosition = ($link, position) ->
+  reset = ->
+    close(animation: false).then ->
+      state.reset()
+      state.chain.reset()
+      config.reset()
+
+  align = ->
     css = {}
 
-    $popup = $('.up-popup')
-    popupBox = u.measure($popup)
+    popupBox = u.measure(state.$popup)
 
-    if u.isFixed($link)
-      linkBox = $link.get(0).getBoundingClientRect()
+    if u.isFixed(state.$anchor)
+      linkBox = state.$anchor.get(0).getBoundingClientRect()
       css['position'] = 'fixed'
     else
-      linkBox = u.measure($link)
+      linkBox = u.measure(state.$anchor)
 
-    switch position
+    switch state.position
       when "bottom-right" # anchored to bottom-right of link, opens towards bottom-left
         css['top'] = linkBox.top + linkBox.height
         css['left'] = linkBox.left + linkBox.width - popupBox.width
@@ -134,31 +142,26 @@ up.popup = (($) ->
         css['top'] = linkBox.top - popupBox.height
         css['left'] = linkBox.left
       else
-        u.error("Unknown position option '%s'", position)
+        u.error("Unknown position option '%s'", state.position)
 
-    $popup.attr('up-position', position)
-    $popup.css(css)
+    state.$popup.attr('up-position', state.position)
+    state.$popup.css(css)
 
   discardHistory = ->
     $popup = $('.up-popup')
     $popup.removeAttr('up-covered-url')
     $popup.removeAttr('up-covered-title')
-    
+
   createFrame = (target, options) ->
-    promise = u.resolvedPromise()
-    if isOpen()
-      promise = promise.then -> close()
-    promise = promise.then ->
-      $popup = u.$createElementFromSelector('.up-popup')
-      $popup.attr('up-sticky', '') if options.sticky
-      $popup.attr('up-covered-url', up.browser.url())
-      $popup.attr('up-covered-title', document.title)
-      # Create an empty element that will match the
-      # selector that is being replaced.
-      u.$createPlaceholder(target, $popup)
-      $popup.appendTo(document.body)
-      $popup
-    return promise
+    $popup = u.$createElementFromSelector('.up-popup')
+    $popup.attr('up-sticky', '') if options.sticky
+    $popup.attr('up-covered-url', up.browser.url())
+    $popup.attr('up-covered-title', document.title)
+    # Create an empty element that will match the
+    # selector that is being replaced.
+    u.$createPlaceholder(target, $popup)
+    $popup.appendTo(document.body)
+    $popup
 
   ###*
   Returns whether popup modal is currently open.
@@ -173,7 +176,7 @@ up.popup = (($) ->
   Attaches a popup overlay to the given element or selector.
 
   Emits events [`up:popup:open`](/up:popup:open) and [`up:popup:opened`](/up:popup:opened).
-  
+
   @function up.popup.attach
   @param {Element|jQuery|String} elementOrSelector
   @param {String} [options.url]
@@ -205,41 +208,47 @@ up.popup = (($) ->
     the opening animation has completed.
   @stable
   ###
-  attach = (linkOrSelector, options) ->
-    $link = $(linkOrSelector)
-    $link.length or u.error('Cannot attach popup to non-existing element %o', linkOrSelector)
-    
-    options = u.options(options)
-    url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
-    html = u.option(u.pluckKey(options, 'html'))
-    target = u.option(u.pluckKey(options, 'target'), $link.attr('up-popup'), 'body')
-    options.position = u.option(options.position, $link.attr('up-position'), config.position)
-    options.animation = u.option(options.animation, $link.attr('up-animation'), config.openAnimation)
-    options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'), config.sticky)
-    options.history = if up.browser.canPushState() then u.option(options.history, u.castedAttr($link, 'up-history'), config.history) else false
-    options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
-    options.method = up.link.followMethod($link, options)
-    animateOptions = up.motion.animateOptions(options, $link, duration: config.openDuration, easing: config.openEasing)
+  attach = (elementOrSelector, options) ->
+    $anchor = $(elementOrSelector)
+    $anchor.length or u.error('Cannot attach popup to non-existing element %o', elementOrSelector)
 
-    up.browser.confirm(options).then ->
-      if up.bus.nobodyPrevents('up:popup:open', url: url, message: 'Opening popup')
-        options.beforeSwap = -> createFrame(target, options)
-        extractOptions = u.merge(options, animation: false)
-        if html
-          promise = up.extract(target, html, extractOptions)
+    options = u.options(options)
+    url = u.option(u.pluckKey(options, 'url'), $anchor.attr('up-href'), $anchor.attr('href'))
+    html = u.option(u.pluckKey(options, 'html'))
+    target = u.option(u.pluckKey(options, 'target'), $anchor.attr('up-popup'), 'body')
+    position = u.option(options.position, $anchor.attr('up-position'), config.position)
+    options.animation = u.option(options.animation, $anchor.attr('up-animation'), config.openAnimation)
+    options.sticky = u.option(options.sticky, u.castedAttr($anchor, 'up-sticky'), config.sticky)
+    options.history = if up.browser.canPushState() then u.option(options.history, u.castedAttr($anchor, 'up-history'), config.history) else false
+    options.confirm = u.option(options.confirm, $anchor.attr('up-confirm'))
+    options.method = up.link.followMethod($anchor, options)
+    animateOptions = up.motion.animateOptions(options, $anchor, duration: config.openDuration, easing: config.openEasing)
+
+    up.browser.whenConfirmed(options).then ->
+      up.bus.whenEmitted('up:popup:open', url: url, message: 'Opening popup').then ->
+        openNow = ->
+          state.phase = 'opening'
+          state.$anchor = $anchor
+          state.position = position
+          options.beforeSwap = -> createFrame(target, options)
+          extractOptions = u.merge(options, animation: false)
+          if html
+            promise = up.extract(target, html, extractOptions)
+          else
+            promise = up.replace(target, url, extractOptions)
+          promise = promise.then ->
+            align()
+            up.animate($('.up-popup'), options.animation, animateOptions)
+          promise = promise.then ->
+            state.phase = 'opened'
+            up.emit('up:popup:opened', message: 'Popup opened')
+
+        if isOpen()
+          state.chain.asap(close, openNow)
         else
-          promise = up.replace(target, url, extractOptions)
-        promise = promise.then ->
-          setPosition($link, options.position)
-        promise = promise.then ->
-          up.animate($('.up-popup'), options.animation, animateOptions)
-        promise = promise.then ->
-          up.emit('up:popup:opened', message: 'Popup opened')
-        promise
-      else
-        # Although someone prevented the destruction, keep a uniform API for
-        # callers by returning a promise that will never be resolved.
-        u.unresolvablePromise()
+          state.chain.asap(openNow)
+
+        state.chain.promise()
 
   ###*
   This event is [emitted](/up.emit) when a popup is starting to open.
@@ -256,7 +265,7 @@ up.popup = (($) ->
   @event up:popup:opened
   @stable
   ###
-      
+
   ###*
   Closes a currently opened popup overlay.
 
@@ -273,26 +282,57 @@ up.popup = (($) ->
   @stable
   ###
   close = (options) ->
-    $popup = $('.up-popup')
-    if $popup.length
-      if up.bus.nobodyPrevents('up:popup:close', $element: $popup)
-        options = u.options(options,
-          animation: config.closeAnimation,
-          url: $popup.attr('up-covered-url'),
-          title: $popup.attr('up-covered-title')
-        )
-        animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
-        u.extend(options, animateOptions)
-        currentUrl = undefined
-        promise = up.destroy($popup, options)
-        promise = promise.then -> up.emit('up:popup:closed', message: 'Popup closed')
-        promise
-      else
-        # Although someone prevented the destruction, keep a uniform API
-        # for callers by returning a promise that will never be resolved.
-        u.unresolvablePromise()
+
+    whenClosed = undefined
+
+    if state.$popup
+      options = u.options(options,
+        animation: config.closeAnimation
+        url: state.$popup.attr('up-covered-url'),
+        title: state.$popup.attr('up-covered-title')
+      )
+      animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
+      u.extend(options, animateOptions)
+
+      whenDestroyed = $.Deferred()
+      destroyElement = ->
+        if up.bus.nobodyPrevents('up:popup:close', $element: $popup)
+          state.phase = 'closing'
+          currentUrl = undefined
+          state.whenActionDone = up.destroy($popup, options)
+          state.whenActionDone.then ->
+            up.emit('up:popup:closed', message: 'Popup closed')
+            state.phase = 'closed'
+            state.$popup = null
+            state.$anchor = null
+            whenDestroyed.resolve()
+            doNextAction()
+            return
+            
+      switch state.phase
+        when 'closed'
+          # No popup is visible.
+          # We do nothing.
+          whenClosed = u.resolvedPromise()
+        when 'closing'
+          # Someone else has started a closing animation before us.
+          # We do nothing.
+          whenClosed = state.whenActionDone
+        when 'opening'
+          # Someone else has started an opening animation before us.
+          # We schedule the closing after the opening animation has finished.
+          state.nextAction = destroyElement
+          whenClosed = whenDestroyed.promise()
+        when 'opened'
+          # A popup is currently shown.
+          # We start closing the tooltip.
+          destroyElement()
+          whenClosed = whenDestroyed.promise()
+
     else
-      u.resolvedPromise()
+      whenClosed = u.resolvedPromise()
+
+    whenClosed
 
   ###*
   This event is [emitted](/up.emit) when a popup dialog

@@ -1757,6 +1757,62 @@ up.util = (($) ->
     # This is by far the fastest way to do this
     not jQuery.contains(document.documentElement, element)
 
+  ###*
+  Given a function that will return a promise, returns a proxy function
+  with an additional `.promise` attribute.
+
+  When the proxy is called, the inner function is called.
+  The proxy's `.promise` attribute is available even before the function is called
+  and will resolve when the inner function's returned promise resolves.
+
+  @function up.util.previewable
+  @internal
+  ###
+  previewable = (fun) ->
+    deferred = $.Deferred()
+    preview = (args...) ->
+      fun(args...).then ->
+        deferred.resolve()
+    preview.promise = deferred.promise()
+    preview
+
+  ###*
+  A linear task queue whose (2..n)th tasks can be changed at any time.
+
+  @function up.util.DivertibleChain
+  @internal
+  ###
+  class DivertibleChain
+
+    constructor: ->
+      @reset()
+
+    reset: =>
+      @queue = []
+      @currentTask = undefined
+
+    promise: =>
+      promises = task.promise for task in @allTasks()
+      $.when(promises...)
+
+    allTasks: =>
+      tasks = []
+      tasks.push(@currentTask) if @currentTask
+      tasks = tasks.concat(@queue)
+      tasks
+
+    poke: =>
+      unless @currentTask # don't start a new task while we're still running one
+        if @currentTask = @queue.shift()
+          promise = @currentTask()
+          promise.then =>
+            @currentTask = undefined
+            @poke()
+
+    asap: (newTasks...) =>
+      @queue = map(newTasks, previewable)
+      @poke()
+
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -1862,6 +1918,7 @@ up.util = (($) ->
   whenReady: whenReady
   identity: identity
   escapeHtml: escapeHtml
+  DivertibleChain: DivertibleChain
 
 )($)
 
