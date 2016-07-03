@@ -113,7 +113,7 @@ up.tooltip = (($) ->
     else
       $element.html(options.html)
     $element.appendTo(document.body)
-    $element
+    state.$tooltip = $element
 
   ###*
   Opens a tooltip over the given element.
@@ -146,7 +146,7 @@ up.tooltip = (($) ->
     doOpen = ->
       state.phase = 'opening'
       state.$anchor = $anchor
-      state.$tooltip = createElement(text: text, html: html)
+      createElement(text: text, html: html)
       state.position = position
       align()
       up.animate(state.$tooltip, animation, animateOptions).then ->

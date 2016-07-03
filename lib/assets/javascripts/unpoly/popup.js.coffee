@@ -47,27 +47,6 @@ up.popup = (($) ->
   u = up.util
 
   ###*
-  Returns the source URL for the fragment displayed
-  in the current popup, or `undefined` if no  popup is open.
-
-  @function up.popup.url
-  @return {String}
-    the source URL
-  @stable
-  ###
-  currentUrl = undefined
-
-  ###*
-  Returns the URL of the page or modal behind the popup.
-
-  @function up.popup.coveredUrl
-  @return {String}
-  @experimental
-  ###
-  coveredUrl = ->
-    state.$popup?.attr('up-covered-url')
-
-  ###*
   Sets default options for future popups.
 
   @property up.popup.config
@@ -104,12 +83,33 @@ up.popup = (($) ->
     position: 'bottom-right'
     history: false
 
+  ###*
+  Returns the source URL for the fragment displayed
+  in the current popup, or `undefined` if no  popup is open.
+
+  @function up.popup.url
+  @return {String}
+    the source URL
+  @stable
+  ###
+
+  ###*
+  Returns the URL of the page or modal behind the popup.
+
+  @function up.popup.coveredUrl
+  @return {String}
+  @experimental
+  ###
+
   state = u.config
     phase: 'closed'      # can be 'opening', 'opened', 'closing' and 'closed'
     $anchor: null        # the element to which the tooltip is anchored
     $popup: null         # the popup container
     position: null       # the position of the popup container element relative to its anchor
     chain: new u.DivertibleChain()
+    currentUrl: null
+    coveredUrl: null
+    coveredTitle: null
 
   reset = ->
     close(animation: false).then ->
@@ -153,15 +153,14 @@ up.popup = (($) ->
     $popup.removeAttr('up-covered-title')
 
   createFrame = (target, options) ->
-    $popup = u.$createElementFromSelector('.up-popup')
-    $popup.attr('up-sticky', '') if options.sticky
-    $popup.attr('up-covered-url', up.browser.url())
-    $popup.attr('up-covered-title', document.title)
+    state.$popup = u.$createElementFromSelector('.up-popup')
     # Create an empty element that will match the
     # selector that is being replaced.
-    u.$createPlaceholder(target, $popup)
-    $popup.appendTo(document.body)
-    $popup
+    u.$createPlaceholder(target, state.$popup)
+    state.$popup.appendTo(document.body)
+    state.sticky = options.sticky
+    state.coveredUrl = up.browser.url()
+    state.coveredTitle = document.title
 
   ###*
   Returns whether popup modal is currently open.
@@ -170,7 +169,7 @@ up.popup = (($) ->
   @stable
   ###
   isOpen = ->
-    $('.up-popup').length > 0
+    state.phase == 'open' || state.phase == 'opening'
 
   ###*
   Attaches a popup overlay to the given element or selector.
@@ -288,18 +287,18 @@ up.popup = (($) ->
     if state.$popup
       options = u.options(options,
         animation: config.closeAnimation
-        url: state.$popup.attr('up-covered-url'),
-        title: state.$popup.attr('up-covered-title')
+        url: state.coveredUrl,
+        title: state.coveredTitle
       )
       animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
       u.extend(options, animateOptions)
 
       whenDestroyed = $.Deferred()
       destroyElement = ->
-        if up.bus.nobodyPrevents('up:popup:close', $element: $popup)
+        if up.bus.nobodyPrevents('up:popup:close', $element: state.$popup)
           state.phase = 'closing'
           currentUrl = undefined
-          state.whenActionDone = up.destroy($popup, options)
+          state.whenActionDone = up.destroy(state.$popup, options)
           state.whenActionDone.then ->
             up.emit('up:popup:closed', message: 'Popup closed')
             state.phase = 'closed'
@@ -456,8 +455,8 @@ up.popup = (($) ->
   knife: eval(Knife?.point)
   attach: attach
   close: close
-  url: -> currentUrl
-  coveredUrl: coveredUrl
+  url: -> state.currentUrl
+  coveredUrl: -> state.coveredUrl
   config: config
   defaults: -> u.error('up.popup.defaults(...) no longer exists. Set values on he up.popup.config property instead.')
   contains: contains
