@@ -385,30 +385,14 @@ up.bus = (($) ->
 
   @function up.reset
   @experimental
-  @return {Promise}
-    A promise that will be resolved when the framework has been reset.
   ###
   emitReset = ->
-    delays = []
-    eventProps =
-      message: 'Resetting framework'
-      await: (promise) -> delays.push(promise)
-    emit('up:framework:reset', eventProps)
-    console.debug('emitReset: waiting for %o delays (%o)', delays.length, delays)
-
-    u.each delays, (delay) ->
-      delay.then -> console.debug('emitReset: A delay is done: %o', delay)
-
-    allDone = $.when(delays...)
-    allDone
+    emit('up:framework:reset', message: 'Resetting framework')
 
   ###*
   This event is [emitted](/up.emit) when Unpoly is [reset](/up.reset) during unit tests.
 
   @event up:framework:reset
-  @param event.await(Promise)
-    Tells [`up.reset()`](/up.reset) to wait for the given promise before it resolves
-    its own promise.
   @experimental
   ###
 

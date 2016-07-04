@@ -78,19 +78,9 @@ describe 'up.popup', ->
       describe 'with { html } option', ->
 
         it 'extracts the selector from the given HTML string', (done) ->
-
-          console.debug('#######################################################')
-          console.debug('#######################################################')
-          console.debug('#######################################################')
-          console.debug('#######################################################')
-
-          console.debug("Starting the spec with %o items left in the chain", up.popup.chain.allTasks())
-
           $span = affix('span')
           up.popup.attach($span, target: '.container', html: "<div class='container'>container contents</div>").then ->
-            console.debug('attach resolved')
             expect($('.up-popup')).toHaveText('container contents')
-            console.debug('expectation checked')
             done()
 
       describe 'opening a popup while another modal is open', ->
@@ -280,9 +270,7 @@ describe 'up.popup', ->
               true # the line above might return false and cancel propagation / prevent default
             up.on 'up:popup:close', ->
               wasClosed = true
-            console.debug("Clicking on a link")
             $link.click()
-            console.debug("after click")
             u.nextFrame ->
               expect(wasClosed).toBe(true)
               expect(wasDefaultPrevented).toBe(true)

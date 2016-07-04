@@ -73,12 +73,10 @@ up.tooltip = (($) ->
 
   reset = (event) ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
-    promise = closeNow(animation: false).then ->
+    closeNow(animation: false).then ->
       state.reset()
       chain.reset()
       config.reset()
-    promise.name = 'TOOLTIP'
-    event.await(promise)
 
   align = ->
     css = {}

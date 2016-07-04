@@ -112,13 +112,11 @@ up.popup = (($) ->
 
   chain = new u.DivertibleChain()
 
-  reset = (event) ->
-    promise = closeNow(animation: false).then ->
+  reset = ->
+    closeNow(animation: false).then ->
       state.reset()
       chain.reset()
       config.reset()
-    promise.name = 'POPUP'
-    event.await(promise)
 
   align = ->
     css = {}
@@ -205,14 +203,10 @@ up.popup = (($) ->
   attachAsap = (elementOrSelector, options) ->
     curriedAttachNow = -> attachNow(elementOrSelector, options)
     if isOpen()
-      console.debug('attachAsap: scheduling close and open')
       chain.asap(closeNow, curriedAttachNow)
     else
-      console.debug('attachAsap: scheduling just open')
       chain.asap(curriedAttachNow)
-    z = chain.promise()
-    z.then -> console.debug('attachAsap chain is done')
-    z
+    chain.promise()
 
   attachNow = (elementOrSelector, options) ->
     $anchor = $(elementOrSelector)
@@ -230,10 +224,8 @@ up.popup = (($) ->
     options.method = up.link.followMethod($anchor, options)
     animateOptions = up.motion.animateOptions(options, $anchor, duration: config.openDuration, easing: config.openEasing)
 
-    y = up.browser.whenConfirmed(options).then ->
+    up.browser.whenConfirmed(options).then ->
       up.bus.whenEmitted('up:popup:open', url: url, message: 'Opening popup').then ->
-
-        console.debug('opening')
         state.phase = 'opening'
         state.$anchor = $anchor
         state.position = position
@@ -241,7 +233,6 @@ up.popup = (($) ->
         state.coveredTitle = document.title
         state.sticky = options.sticky
         options.beforeSwap = ->
-          console.debug('before createFrame')
           createFrame(target, options)
         extractOptions = u.merge(options, animation: false)
         if html
@@ -249,25 +240,12 @@ up.popup = (($) ->
         else
           promise = up.replace(target, url, extractOptions)
         promise = promise.then ->
-          console.debug('before align')
           align()
-          console.debug('after align')
-          console.debug("calling up.animate with %o, %o, %o", state.$popup, options.animation, animateOptions)
-          x = up.animate(state.$popup, options.animation, animateOptions)
-          console.debug("up.animate returned %o", x)
-          x.then ->
-            console.debug("up.animate promise resolved")
-          x
+          up.animate(state.$popup, options.animation, animateOptions)
         promise = promise.then ->
-          console.debug('now opened')
           state.phase = 'opened'
           up.emit('up:popup:opened', message: 'Popup opened')#
         promise
-
-    y.then ->
-      console.debug "whenConfirmed done"
-
-    y
 
   ###*
   This event is [emitted](/up.emit) when a popup is starting to open.
@@ -301,12 +279,8 @@ up.popup = (($) ->
   @stable
   ###
   closeAsap = (options) ->
-    console.debug('closeAsap called')
     if isOpen()
-      console.debug('closeAsap: scheduling close')
       chain.asap -> closeNow(options)
-    else
-      console.debug('closeAsap: nothing is open')
     chain.promise()
 
   closeNow = (options) ->
@@ -396,10 +370,8 @@ up.popup = (($) ->
   ###
   up.link.onAction('[up-popup]', ($link) ->
     if $link.is('.up-current')
-      console.debug('not current: closing')
       closeAsap()
     else
-      console.debug('current: attaching')
       attachAsap($link)
   )
 
@@ -408,7 +380,6 @@ up.popup = (($) ->
   up.on('mousedown', 'body', (event, $body) ->
     $target = $(event.target)
     unless $target.closest('.up-popup, [up-popup]').length
-      console.debug('mousedown/body: closing')
       closeAsap()
   )
   

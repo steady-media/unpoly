@@ -167,14 +167,12 @@ up.modal = (($) ->
   coveredUrl = ->
     $('.up-modal').attr('up-covered-url')
 
-  reset = (event) ->
+  reset = ->
     # Destroy the modal container regardless whether it's currently in a closing animation
-    promise = close(animation: false).then ->
+    close(animation: false).then ->
       currentUrl = undefined
       currentFlavor = undefined
       config.reset()
-    promise.name = 'MODAL'
-    event.await(promise)
 
   templateHtml = ->
     template = flavorDefault('template')
