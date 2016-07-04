@@ -162,7 +162,7 @@ up.popup = (($) ->
   @stable
   ###
   isOpen = ->
-    state.phase == 'open' || state.phase == 'opening'
+    state.phase == 'opened' || state.phase == 'opening'
 
   ###*
   Attaches a popup overlay to the given element or selector.
@@ -372,6 +372,7 @@ up.popup = (($) ->
     if $link.is('.up-current')
       close()
     else
+      debugger
       attach($link)
   )
 

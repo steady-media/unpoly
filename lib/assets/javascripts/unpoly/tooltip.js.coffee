@@ -247,6 +247,7 @@ up.tooltip = (($) ->
 
   config: config
   attach: attach
+  isOpen: isOpen
   close: close
 
 )(jQuery)
