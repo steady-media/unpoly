@@ -71,7 +71,7 @@ up.tooltip = (($) ->
 
   chain = new u.DivertibleChain()
 
-  reset = (event) ->
+  reset = ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
     closeNow(animation: false).then ->
       state.reset()

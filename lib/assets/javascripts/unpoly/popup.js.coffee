@@ -294,7 +294,7 @@ up.popup = (($) ->
 
     up.bus.whenEmitted('up:popup:close', $element: state.$popup).then ->
       state.phase = 'closing'
-      state.currentUrl = null
+      state.url = null
       state.coveredUrl = null
       state.coveredTitle = null
       up.destroy(state.$popup, options).then ->
@@ -386,7 +386,7 @@ up.popup = (($) ->
   up.on('up:fragment:inserted', (event, $fragment) ->
     if contains($fragment)
       if newSource = $fragment.attr('up-source')
-        state.currentUrl = newSource
+        state.url = newSource
     else if contains(event.origin)
       autoclose()
   )
@@ -423,7 +423,7 @@ up.popup = (($) ->
   knife: eval(Knife?.point)
   attach: attachAsap
   close: closeAsap
-  url: -> state.currentUrl
+  url: -> state.url
   coveredUrl: -> state.coveredUrl
   config: config
   contains: contains
