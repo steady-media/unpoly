@@ -68,13 +68,14 @@ up.tooltip = (($) ->
     $anchor: null        # the element to which the tooltip is anchored
     $tooltip: null       # the tooltiop element
     position: null       # the position of the tooltip element relative to its anchor
-    chain: new u.DivertibleChain()
+
+  chain = new u.DivertibleChain()
 
   reset = ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
     close(animation: false).then ->
       state.reset()
-      state.chain.reset()
+      chain.reset()
       config.reset()
 
   align = ->
@@ -88,16 +89,16 @@ up.tooltip = (($) ->
       linkBox = u.measure(state.$anchor)
 
     switch state.position
-      when "top"
+      when 'top'
         css['top'] = linkBox.top - tooltipBox.height
         css['left'] = linkBox.left + 0.5 * (linkBox.width - tooltipBox.width)
-      when "left"
+      when 'left'
         css['top'] = linkBox.top + 0.5 * (linkBox.height - tooltipBox.height)
         css['left'] = linkBox.left - tooltipBox.width
-      when "right"
+      when 'right'
         css['top'] = linkBox.top + 0.5 * (linkBox.height - tooltipBox.height)
         css['left'] = linkBox.left + linkBox.width
-      when "bottom"
+      when 'bottom'
         css['top'] = linkBox.top + linkBox.height
         css['left'] = linkBox.left + 0.5 * (linkBox.width - tooltipBox.width)
       else
@@ -153,11 +154,11 @@ up.tooltip = (($) ->
         state.phase = 'opened'
 
     if isOpen()
-      state.chain.asap(close, doOpen)
+      chain.asap(close, doOpen)
     else
-      state.chain.asap(doOpen)
+      chain.asap(doOpen)
 
-    state.chain.promise()
+    chain.promise()
 
   ###*
   Closes a currently shown tooltip.
@@ -183,9 +184,9 @@ up.tooltip = (($) ->
         state.$anchor = null
 
     if isOpen()
-      state.chain.asap(doClose)
+      chain.asap(doClose)
 
-    return state.chain.promise()
+    return chain.promise()
 
   ###*
   Returns whether a tooltip is currently showing.
@@ -244,10 +245,8 @@ up.tooltip = (($) ->
   # Close the tooltip when the user presses ESC.
   up.bus.onEscape(-> close())
 
-
   config: config
   attach: attach
   close: close
-  open: -> u.error('up.tooltip.open no longer exists. Use up.tooltip.attach instead.')
 
 )(jQuery)
