@@ -393,7 +393,7 @@ up.modal = (($) ->
     options.history = u.option(options.history, u.castedAttr($link, 'up-history'), flavorDefault('history', options.flavor))
     options.history = false unless up.browser.canPushState()
 
-    up.browser.confirm(options).then ->
+    up.browser.whenConfirmed(options).then ->
       if up.bus.nobodyPrevents('up:modal:open', url: url, message: 'Opening modal')
         options.beforeSwap = -> createFrame(target, options)
         extractOptions = u.merge(options, animation: false)

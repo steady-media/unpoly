@@ -113,7 +113,7 @@ up.popup = (($) ->
   chain = new u.DivertibleChain()
 
   reset = ->
-    close(animation: false).then ->
+    closeAsap(animation: false).then ->
       state.reset()
       chain.reset()
       config.reset()
@@ -200,7 +200,17 @@ up.popup = (($) ->
     the opening animation has completed.
   @stable
   ###
-  attach = (elementOrSelector, options) ->
+  attachAsap = (elementOrSelector, options) ->
+    curriedAttachNow = -> attachNow(elementOrSelector, options)
+    if isOpen()
+      console.debug('attach: scheduling close and open')
+      chain.asap(closeNow, curriedAttachNow)
+    else
+      console.debug('attach: scheduling just open')
+      chain.asap(curriedAttachNow)
+    chain.promise()
+
+  attachNow = (elementOrSelector, options) ->
     $anchor = $(elementOrSelector)
     $anchor.length or u.error('Cannot attach popup to non-existing element %o', elementOrSelector)
 
@@ -218,32 +228,32 @@ up.popup = (($) ->
 
     up.browser.whenConfirmed(options).then ->
       up.bus.whenEmitted('up:popup:open', url: url, message: 'Opening popup').then ->
-        openNow = ->
-          state.phase = 'opening'
-          state.$anchor = $anchor
-          state.position = position
-          state.coveredUrl = up.browser.url()
-          state.coveredTitle = document.title
-          state.sticky = options.sticky
-          options.beforeSwap = -> createFrame(target, options)
-          extractOptions = u.merge(options, animation: false)
-          if html
-            promise = up.extract(target, html, extractOptions)
-          else
-            promise = up.replace(target, url, extractOptions)
-          promise = promise.then ->
-            align()
-            up.animate($('.up-popup'), options.animation, animateOptions)
-          promise = promise.then ->
-            state.phase = 'opened'
-            up.emit('up:popup:opened', message: 'Popup opened')
 
-        if isOpen()
-          chain.asap(close, openNow)
+        console.debug('opening')
+        state.phase = 'opening'
+        state.$anchor = $anchor
+        state.position = position
+        state.coveredUrl = up.browser.url()
+        state.coveredTitle = document.title
+        state.sticky = options.sticky
+        options.beforeSwap = ->
+          console.debug('before createFrame')
+          createFrame(target, options)
+        extractOptions = u.merge(options, animation: false)
+        if html
+          promise = up.extract(target, html, extractOptions)
         else
-          chain.asap(openNow)
+          promise = up.replace(target, url, extractOptions)
+        promise = promise.then ->
+          console.debug('before align')
+          align()
+          up.animate(state.$popup, options.animation, animateOptions)
+        promise = promise.then ->
+          console.debug('now opened')
+          state.phase = 'opened'
+          up.emit('up:popup:opened', message: 'Popup opened')#
+        promise
 
-        chain.promise()
 
   ###*
   This event is [emitted](/up.emit) when a popup is starting to open.
@@ -276,32 +286,31 @@ up.popup = (($) ->
     animation has finished.
   @stable
   ###
-  close = (options) ->
-
+  closeAsap = (options) ->
+    console.debug('close: scheduling close')
     if isOpen()
-      options = u.options(options,
-        animation: config.closeAnimation
-        url: state.coveredUrl,
-        title: state.coveredTitle
-      )
-      animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
-      u.extend(options, animateOptions)
-
-      doClose = ->
-        up.bus.whenEmitted('up:popup:close', $element: state.$popup).then ->
-          state.phase = 'closing'
-          state.currentUrl = null
-          state.coveredUrl = null
-          state.coveredTitle = null
-          up.destroy(state.$popup, options).then ->
-            up.emit('up:popup:closed', message: 'Popup closed')
-            state.phase = 'closed'
-            state.$popup = null
-            state.$anchor = null
-
-      chain.asap(doClose)
-
+      chain.asap -> closeNow(options)
     chain.promise()
+
+  closeNow = (options) ->
+    options = u.options(options,
+      animation: config.closeAnimation
+      url: state.coveredUrl,
+      title: state.coveredTitle
+    )
+    animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
+    u.extend(options, animateOptions)
+
+    up.bus.whenEmitted('up:popup:close', $element: state.$popup).then ->
+      state.phase = 'closing'
+      state.currentUrl = null
+      state.coveredUrl = null
+      state.coveredTitle = null
+      up.destroy(state.$popup, options).then ->
+        up.emit('up:popup:closed', message: 'Popup closed')
+        state.phase = 'closed'
+        state.$popup = null
+        state.$anchor = null
 
   ###*
   This event is [emitted](/up.emit) when a popup dialog
@@ -322,7 +331,7 @@ up.popup = (($) ->
   ###
       
   autoclose = ->
-    close() unless state.sticky
+    closeAsap() unless state.sticky
 
   ###*
   Returns whether the given element or selector is contained
@@ -370,10 +379,11 @@ up.popup = (($) ->
   ###
   up.link.onAction('[up-popup]', ($link) ->
     if $link.is('.up-current')
-      close()
+      console.debug('not current: closing')
+      closeAsap()
     else
-      debugger
-      attach($link)
+      console.debug('current: attaching')
+      attachAsap($link)
   )
 
   # Close the popup when someone clicks outside the popup
@@ -381,7 +391,8 @@ up.popup = (($) ->
   up.on('mousedown', 'body', (event, $body) ->
     $target = $(event.target)
     unless $target.closest('.up-popup, [up-popup]').length
-      close()
+      console.debug('mousedown/body: closing')
+      closeAsap()
   )
   
   up.on('up:fragment:inserted', (event, $fragment) ->
@@ -393,7 +404,7 @@ up.popup = (($) ->
   )
   
   # Close the pop-up overlay when the user presses ESC.
-  up.bus.onEscape(close)
+  up.bus.onEscape(closeAsap)
 
   ###*
   When an element with this attribute is clicked,
@@ -411,7 +422,7 @@ up.popup = (($) ->
   ###
   up.on('click', '[up-close]', (event, $element) ->
     if contains($element)
-      close()
+      closeAsap()
       # Only prevent the default when we actually closed a popup.
       # This way we can have buttons that close a popup when within a popup,
       # but link to a destination if not.
@@ -422,8 +433,8 @@ up.popup = (($) ->
   up.on 'up:framework:reset', reset
 
   knife: eval(Knife?.point)
-  attach: attach
-  close: close
+  attach: attachAsap
+  close: closeAsap
   url: -> state.currentUrl
   coveredUrl: -> state.coveredUrl
   config: config

@@ -73,7 +73,7 @@ up.tooltip = (($) ->
 
   reset = ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
-    close(animation: false).then ->
+    closeAsap(animation: false).then ->
       state.reset()
       chain.reset()
       config.reset()
@@ -136,29 +136,30 @@ up.tooltip = (($) ->
     A promise that will be resolved when the tooltip's opening animation has finished.
   @stable
   ###
-  attach = (elementOrSelector, options = {}) ->
+  attachAsap = (elementOrSelector, options = {}) ->
+    curriedAttachNow = -> attachNow(elementOrSelector, options)
+    if isOpen()
+      chain.asap(closeNow, curriedAttachNow)
+    else
+      chain.asap(curriedAttachNow)
+    chain.promise()
+
+  attachNow = (elementOrSelector, options) ->
     $anchor = $(elementOrSelector)
+    options = u.options(options)
     html = u.option(options.html, $anchor.attr('up-tooltip-html'))
     text = u.option(options.text, $anchor.attr('up-tooltip'))
     position = u.option(options.position, $anchor.attr('up-position'), config.position)
     animation = u.option(options.animation, u.castedAttr($anchor, 'up-animation'), config.openAnimation)
     animateOptions = up.motion.animateOptions(options, $anchor, duration: config.openDuration, easing: config.openEasing)
 
-    doOpen = ->
-      state.phase = 'opening'
-      state.$anchor = $anchor
-      createElement(text: text, html: html)
-      state.position = position
-      align()
-      up.animate(state.$tooltip, animation, animateOptions).then ->
-        state.phase = 'opened'
-
-    if isOpen()
-      chain.asap(close, doOpen)
-    else
-      chain.asap(doOpen)
-
-    chain.promise()
+    state.phase = 'opening'
+    state.$anchor = $anchor
+    createElement(text: text, html: html)
+    state.position = position
+    align()
+    up.animate(state.$tooltip, animation, animateOptions).then ->
+      state.phase = 'opened'
 
   ###*
   Closes a currently shown tooltip.
@@ -171,22 +172,20 @@ up.tooltip = (($) ->
     A promise for the end of the closing animation.
   @stable
   ###
-  close = (options) ->
+  closeAsap = (options) ->
+    if isOpen()
+      chain.asap -> closeNow(options)
+    chain.promise()
+
+  closeNow = (options) ->
     options = u.options(options, animation: config.closeAnimation)
     animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
     u.extend(options, animateOptions)
-
-    doClose = ->
-      state.phase = 'closing'
-      up.destroy(state.$tooltip, options).then ->
-        state.phase = 'closed'
-        state.$tooltip = null
-        state.$anchor = null
-
-    if isOpen()
-      chain.asap(doClose)
-
-    return chain.promise()
+    state.phase = 'closing'
+    up.destroy(state.$tooltip, options).then ->
+      state.phase = 'closed'
+      state.$tooltip = null
+      state.$anchor = null
 
   ###*
   Returns whether a tooltip is currently showing.
@@ -229,13 +228,13 @@ up.tooltip = (($) ->
   up.compiler('[up-tooltip], [up-tooltip-html]', ($opener) ->
     # Don't register these events on document since *every*
     # mouse move interaction  bubbles up to the document. 
-    $opener.on('mouseenter', -> attach($opener))
-    $opener.on('mouseleave', -> close())
+    $opener.on('mouseenter', -> attachAsap($opener))
+    $opener.on('mouseleave', -> closeAsap())
   )
 
   # Close the tooltip when someone clicks anywhere.
   up.on('click', 'body', (event, $body) ->
-    close()
+    closeAsap()
   )
 
   # The framework is reset between tests, so also close
@@ -243,11 +242,11 @@ up.tooltip = (($) ->
   up.on 'up:framework:reset', reset
 
   # Close the tooltip when the user presses ESC.
-  up.bus.onEscape(-> close())
+  up.bus.onEscape(-> closeAsap())
 
   config: config
-  attach: attach
+  attach: attachAsap
   isOpen: isOpen
-  close: close
+  close: closeAsap
 
 )(jQuery)

@@ -52,7 +52,7 @@ up.util = (($) ->
     Whether to include an `#hash` anchor in the normalized URL
   @param {Boolean} [options.search=true]
     Whether to include a `?query` string in the normalized URL
-  @param {Boolean} [options.stripTrailingSlash=false]
+  @param {Boolean} [options.stripTrailingSlash=true]
     Whether to strip a trailing slash from the pathname
   @internal
   ###
@@ -65,7 +65,7 @@ up.util = (($) ->
     # We have seen this in IE11 and W3Schools claims it happens in IE9 or earlier
     # http://www.w3schools.com/jsref/prop_anchor_pathname.asp
     pathname = "/#{pathname}" unless pathname[0] == '/'
-    pathname = pathname.replace(/\/$/, '') if options?.stripTrailingSlash == true
+    pathname = pathname.replace(/\/$/, '') unless options?.stripTrailingSlash == false
     normalized += pathname
     normalized += anchor.hash if options?.hash == true
     normalized += anchor.search unless options?.search == false
@@ -1811,6 +1811,7 @@ up.util = (($) ->
 
     asap: (newTasks...) =>
       @queue = map(newTasks, previewable)
+      console.debug("Queue has %o items (%o)", @queue.length, @queue)
       @poke()
 
   isDetached: isDetached
