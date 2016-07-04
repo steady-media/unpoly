@@ -77,10 +77,21 @@ describe 'up.popup', ->
 
       describe 'with { html } option', ->
 
-        it 'extracts the selector from the given HTML string', ->
+        it 'extracts the selector from the given HTML string', (done) ->
+
+          console.debug('#######################################################')
+          console.debug('#######################################################')
+          console.debug('#######################################################')
+          console.debug('#######################################################')
+
+          console.debug("Starting the spec with %o items left in the chain", up.popup.chain.allTasks())
+
           $span = affix('span')
-          up.popup.attach($span, target: '.container', html: "<div class='container'>container contents</div>")
-          expect($('.up-popup')).toHaveText('container contents')
+          up.popup.attach($span, target: '.container', html: "<div class='container'>container contents</div>").then ->
+            console.debug('attach resolved')
+            expect($('.up-popup')).toHaveText('container contents')
+            console.debug('expectation checked')
+            done()
 
       describe 'opening a popup while another modal is open', ->
 
@@ -89,18 +100,20 @@ describe 'up.popup', ->
           up.popup.config.closeDuration = 10
           promise1 = up.popup.attach($span, url: '/path1', target: '.container', animation: 'fade-in', duration: 100)
           promise2 = up.popup.attach($span, url: '/path2', target: '.container', animation: 'fade-in', duration: 100)
-          expect(jasmine.Ajax.requests.count()).toBe(2)
-          request1 = jasmine.Ajax.requests.at(0)
-          request2 = jasmine.Ajax.requests.at(1)
 
-          u.setTimer 10, =>
-            @respondWith('<div class="container">response1</div>', request: request1)
+          u.nextFrame ->
+            expect(jasmine.Ajax.requests.count()).toBe(2)
+            request1 = jasmine.Ajax.requests.at(0)
+            request2 = jasmine.Ajax.requests.at(1)
+
             u.setTimer 10, =>
-              @respondWith('<div class="container">response2</div>', request: request2)
-              u.setTimer 30, =>
-                expect($('.up-popup').length).toBe(1)
-                expect($('.container')).toHaveText('response2')
-                done()
+              @respondWith('<div class="container">response1</div>', request: request1)
+              u.setTimer 10, =>
+                @respondWith('<div class="container">response2</div>', request: request2)
+                u.setTimer 30, =>
+                  expect($('.up-popup').length).toBe(1)
+                  expect($('.container')).toHaveText('response2')
+                  done()
 
         describeCapability 'canCssTransition', ->
 
@@ -153,14 +166,14 @@ describe 'up.popup', ->
 
         it 'returns the URL behind the popup', (done) ->
           up.history.replace('/foo')
-          expect(up.popup.coveredUrl()).toBeUndefined()
+          expect(up.popup.coveredUrl()).toBeMissing()
 
           $popupLink = affix('a[href="/bar"][up-popup=".container"]')
           $popupLink.click()
           @respondWith('<div class="container">text</div>')
           expect(up.popup.coveredUrl()).toEndWith('/foo')
           up.popup.close().then ->
-            expect(up.popup.coveredUrl()).toBeUndefined()
+            expect(up.popup.coveredUrl()).toBeMissing()
             done()
 
     describe 'up.popup.close', ->
@@ -178,7 +191,7 @@ describe 'up.popup', ->
       beforeEach ->
         @stubAttach = =>
           @$link = affix('a[href="/path"][up-popup=".target"]')
-          @attachSpy = up.popup.knife.mock('attach').and.returnValue(u.resolvedPromise())
+          @attachSpy = up.popup.knife.mock('attachAsap').and.returnValue(u.resolvedPromise())
           @defaultSpy = up.link.knife.mock('allowDefault').and.callFake((event) -> event.preventDefault())
 
       it 'opens the clicked link in a popup', ->
@@ -207,6 +220,9 @@ describe 'up.popup', ->
         @stubAttach()
         Trigger.click(@$link, metaKey: true)
         expect(@attachSpy).not.toHaveBeenCalled()
+
+      describe 'closes an existing popup before opening the new popup', ->
+        throw "should work"
 
       describe 'with [up-instant] modifier', ->
 
@@ -255,7 +271,7 @@ describe 'up.popup', ->
 
       describe 'when clicked inside a popup', ->
 
-        it 'closes the open popup and prevents the default action', ->
+        it 'closes the open popup and prevents the default action', (done) ->
           $popup = affix('.up-popup')
           $link = $popup.affix('a[up-close]') # link is within the popup
           up.hello($link)
@@ -266,9 +282,13 @@ describe 'up.popup', ->
             true # the line above might return false and cancel propagation / prevent default
           up.on 'up:popup:close', ->
             wasClosed = true
+          console.debug("Clicking on a link")
           $link.click()
-          expect(wasClosed).toBe(true)
-          expect(wasDefaultPrevented).toBe(true)
+          console.debug("after click")
+          u.nextFrame ->
+            expect(wasClosed).toBe(true)
+            expect(wasDefaultPrevented).toBe(true)
+            done()
 
       describe 'when no popup is open', ->
 

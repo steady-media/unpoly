@@ -71,12 +71,14 @@ up.tooltip = (($) ->
 
   chain = new u.DivertibleChain()
 
-  reset = ->
+  reset = (event) ->
     # Destroy the tooltip container regardless whether it's currently in a closing animation
-    closeAsap(animation: false).then ->
+    promise = closeNow(animation: false).then ->
       state.reset()
       chain.reset()
       config.reset()
+    promise.name = 'TOOLTIP'
+    event.await(promise)
 
   align = ->
     css = {}

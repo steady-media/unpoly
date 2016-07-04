@@ -1792,7 +1792,8 @@ up.util = (($) ->
       @currentTask = undefined
 
     promise: =>
-      promises = task.promise for task in @allTasks()
+      promises = map @allTasks(), (task) -> task.promise
+      console.debug("chain.promise: Building a chain promise from %o promises (%o)", promises.length, promises)
       $.when(promises...)
 
     allTasks: =>
@@ -1802,16 +1803,17 @@ up.util = (($) ->
       tasks
 
     poke: =>
+      console.debug("poke: Queue has %o items (%o)", @queue.length, @queue)
       unless @currentTask # don't start a new task while we're still running one
         if @currentTask = @queue.shift()
+          console.debug("poke: Queue has %o items (%o)", @queue.length, @queue)
           promise = @currentTask()
-          promise.then =>
+          promise.always =>
             @currentTask = undefined
             @poke()
 
     asap: (newTasks...) =>
       @queue = map(newTasks, previewable)
-      console.debug("Queue has %o items (%o)", @queue.length, @queue)
       @poke()
 
   isDetached: isDetached

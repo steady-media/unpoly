@@ -268,6 +268,8 @@ up.bus = (($) ->
   emit = (eventName, eventProps = {}) ->
     event = $.Event(eventName, eventProps)
     if $target = eventProps.$element
+      # If a `.$element` option is given, we trigger the event
+      # on that element instead of the document.
       delete eventProps.$element
     else
       $target = $(document)
@@ -379,16 +381,34 @@ up.bus = (($) ->
   This is an internal method for to enable unit testing.
   Don't use this in production.
 
+  Emits event [`up:framework:reset`](/up:framework:reset).
+
   @function up.reset
   @experimental
+  @return {Promise}
+    A promise that will be resolved when the framework has been reset.
   ###
   emitReset = ->
-    emit('up:framework:reset', message: 'Resetting framework')
+    delays = []
+    eventProps =
+      message: 'Resetting framework'
+      await: (promise) -> delays.push(promise)
+    emit('up:framework:reset', eventProps)
+    console.debug('emitReset: waiting for %o delays (%o)', delays.length, delays)
+
+    u.each delays, (delay) ->
+      delay.then -> console.debug('emitReset: A delay is done: %o', delay)
+
+    allDone = $.when(delays...)
+    allDone
 
   ###*
   This event is [emitted](/up.emit) when Unpoly is [reset](/up.reset) during unit tests.
 
   @event up:framework:reset
+  @param event.await(Promise)
+    Tells [`up.reset()`](/up.reset) to wait for the given promise before it resolves
+    its own promise.
   @experimental
   ###
 

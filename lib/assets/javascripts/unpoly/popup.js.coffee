@@ -76,8 +76,8 @@ up.popup = (($) ->
   config = u.config
     openAnimation: 'fade-in'
     closeAnimation: 'fade-out'
-    openDuration: null
-    closeDuration: null
+    openDuration: 150
+    closeDuration: 100
     openEasing: null
     closeEasing: null
     position: 'bottom-right'
@@ -112,11 +112,13 @@ up.popup = (($) ->
 
   chain = new u.DivertibleChain()
 
-  reset = ->
-    closeAsap(animation: false).then ->
+  reset = (event) ->
+    promise = closeNow(animation: false).then ->
       state.reset()
       chain.reset()
       config.reset()
+    promise.name = 'POPUP'
+    event.await(promise)
 
   align = ->
     css = {}
@@ -203,12 +205,14 @@ up.popup = (($) ->
   attachAsap = (elementOrSelector, options) ->
     curriedAttachNow = -> attachNow(elementOrSelector, options)
     if isOpen()
-      console.debug('attach: scheduling close and open')
+      console.debug('attachAsap: scheduling close and open')
       chain.asap(closeNow, curriedAttachNow)
     else
-      console.debug('attach: scheduling just open')
+      console.debug('attachAsap: scheduling just open')
       chain.asap(curriedAttachNow)
-    chain.promise()
+    z = chain.promise()
+    z.then -> console.debug('attachAsap chain is done')
+    z
 
   attachNow = (elementOrSelector, options) ->
     $anchor = $(elementOrSelector)
@@ -226,7 +230,7 @@ up.popup = (($) ->
     options.method = up.link.followMethod($anchor, options)
     animateOptions = up.motion.animateOptions(options, $anchor, duration: config.openDuration, easing: config.openEasing)
 
-    up.browser.whenConfirmed(options).then ->
+    y = up.browser.whenConfirmed(options).then ->
       up.bus.whenEmitted('up:popup:open', url: url, message: 'Opening popup').then ->
 
         console.debug('opening')
@@ -247,12 +251,23 @@ up.popup = (($) ->
         promise = promise.then ->
           console.debug('before align')
           align()
-          up.animate(state.$popup, options.animation, animateOptions)
+          console.debug('after align')
+          console.debug("calling up.animate with %o, %o, %o", state.$popup, options.animation, animateOptions)
+          x = up.animate(state.$popup, options.animation, animateOptions)
+          console.debug("up.animate returned %o", x)
+          x.then ->
+            console.debug("up.animate promise resolved")
+          x
         promise = promise.then ->
           console.debug('now opened')
           state.phase = 'opened'
           up.emit('up:popup:opened', message: 'Popup opened')#
         promise
+
+    y.then ->
+      console.debug "whenConfirmed done"
+
+    y
 
 
   ###*
@@ -287,9 +302,12 @@ up.popup = (($) ->
   @stable
   ###
   closeAsap = (options) ->
-    console.debug('close: scheduling close')
+    console.debug('closeAsap called')
     if isOpen()
+      console.debug('closeAsap: scheduling close')
       chain.asap -> closeNow(options)
+    else
+      console.debug('closeAsap: nothing is open')
     chain.promise()
 
   closeNow = (options) ->
@@ -440,5 +458,6 @@ up.popup = (($) ->
   config: config
   contains: contains
   isOpen: isOpen
+  chain: chain
 
 )(jQuery)
