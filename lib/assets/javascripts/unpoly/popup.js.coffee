@@ -269,7 +269,6 @@ up.popup = (($) ->
 
     y
 
-
   ###*
   This event is [emitted](/up.emit) when a popup is starting to open.
 

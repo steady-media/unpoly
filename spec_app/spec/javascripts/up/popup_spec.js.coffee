@@ -95,26 +95,6 @@ describe 'up.popup', ->
 
       describe 'opening a popup while another modal is open', ->
 
-        it 'does not open multiple popups or pad the body twice if the user starts loading a second popup before the first was done loading', (done) ->
-          $span = affix('span')
-          up.popup.config.closeDuration = 10
-          promise1 = up.popup.attach($span, url: '/path1', target: '.container', animation: 'fade-in', duration: 100)
-          promise2 = up.popup.attach($span, url: '/path2', target: '.container', animation: 'fade-in', duration: 100)
-
-          u.nextFrame ->
-            expect(jasmine.Ajax.requests.count()).toBe(2)
-            request1 = jasmine.Ajax.requests.at(0)
-            request2 = jasmine.Ajax.requests.at(1)
-
-            u.setTimer 10, =>
-              @respondWith('<div class="container">response1</div>', request: request1)
-              u.setTimer 10, =>
-                @respondWith('<div class="container">response2</div>', request: request2)
-                u.setTimer 30, =>
-                  expect($('.up-popup').length).toBe(1)
-                  expect($('.container')).toHaveText('response2')
-                  done()
-
         describeCapability 'canCssTransition', ->
 
           it 'closes the current popup and wait for its close animation to finish before starting the open animation of a second popup', (done) ->
@@ -126,8 +106,7 @@ describe 'up.popup', ->
 
             events = []
             u.each ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed'], (event) ->
-              up.on event, ->
-                events.push(event)
+              up.on event, -> events.push(event)
 
             up.popup.attach($span, { target: '.target', html: '<div class="target">response1</div>' })
 
@@ -142,20 +121,16 @@ describe 'up.popup', ->
 
               up.popup.attach($span, { target: '.target', html: '<div class="target">response2</div>' })
 
-              # First popup is starting close animation. Second popup waits for that.
-              expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:open', 'up:popup:close']
-              expect($('.target')).toHaveText('response1')
-
               u.setTimer 15, ->
 
-                # Second popup is still waiting for first popup's closing animaton to finish.
-                expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:open', 'up:popup:close']
+                # Second popup is still waiting for first popup's closing animation to finish.
+                expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close']
                 expect($('.target')).toHaveText('response1')
 
                 u.setTimer 100, ->
 
                   # First popup has finished closing, second popup has finished opening.
-                  expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:open', 'up:popup:close', 'up:popup:closed', 'up:popup:opened']
+                  expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open', 'up:popup:opened']
                   expect($('.target')).toHaveText('response2')
 
                   done()
@@ -221,8 +196,29 @@ describe 'up.popup', ->
         Trigger.click(@$link, metaKey: true)
         expect(@attachSpy).not.toHaveBeenCalled()
 
-      describe 'closes an existing popup before opening the new popup', ->
-        throw "should work"
+      it 'closes an existing popup before opening the new popup', ->
+
+        up.popup.config.openDuration = 0
+        up.popup.config.closeDuration = 0
+
+        $link1 = affix('a[href="/path1"][up-popup=".target"]')
+        $link2 = affix('a[href="/path2"][up-popup=".target"]')
+
+        events = []
+        u.each ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed'], (event) ->
+          up.on event, -> events.push(event)
+
+        Trigger.click($link1)
+        expect(events).toEqual ['up:popup:open']
+        @respondWith('<div class="target">text1</div>')
+        expect(events).toEqual ['up:popup:open', 'up:popup:opened']
+
+        Trigger.click($link2)
+        expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open']
+        @respondWith('<div class="target">text1</div>')
+
+        expect(events).toEqual ['up:popup:open', 'up:popup:opened', 'up:popup:close', 'up:popup:closed', 'up:popup:open', 'up:popup:opened']
+
 
       describe 'with [up-instant] modifier', ->
 
@@ -272,23 +268,25 @@ describe 'up.popup', ->
       describe 'when clicked inside a popup', ->
 
         it 'closes the open popup and prevents the default action', (done) ->
-          $popup = affix('.up-popup')
-          $link = $popup.affix('a[up-close]') # link is within the popup
-          up.hello($link)
-          wasDefaultPrevented = false
-          wasClosed = false
-          up.on 'click', 'a[up-close]', (event) ->
-            wasDefaultPrevented = event.isDefaultPrevented()
-            true # the line above might return false and cancel propagation / prevent default
-          up.on 'up:popup:close', ->
-            wasClosed = true
-          console.debug("Clicking on a link")
-          $link.click()
-          console.debug("after click")
-          u.nextFrame ->
-            expect(wasClosed).toBe(true)
-            expect(wasDefaultPrevented).toBe(true)
-            done()
+          $link = affix('a')
+          up.popup.attach($link, html: '<div class="target">text</div>', target: '.target').then ->
+            $popup = affix('.up-popup')
+            $link = $popup.affix('a[up-close]') # link is within the popup
+            up.hello($link)
+            wasDefaultPrevented = false
+            wasClosed = false
+            up.on 'click', 'a[up-close]', (event) ->
+              wasDefaultPrevented = event.isDefaultPrevented()
+              true # the line above might return false and cancel propagation / prevent default
+            up.on 'up:popup:close', ->
+              wasClosed = true
+            console.debug("Clicking on a link")
+            $link.click()
+            console.debug("after click")
+            u.nextFrame ->
+              expect(wasClosed).toBe(true)
+              expect(wasDefaultPrevented).toBe(true)
+              done()
 
       describe 'when no popup is open', ->
 
