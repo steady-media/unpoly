@@ -180,6 +180,7 @@ up.link = (($) ->
     options.method = followMethod($link, options)
     options.origin = u.option(options.origin, $link)
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
+    options.layer = u.option(options.layer, $link.attr('up-layer'), 'auto')
     options = u.merge(options, up.motion.animateOptions(options, $link))
 
     up.browser.whenConfirmed(options).then ->

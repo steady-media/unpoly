@@ -193,6 +193,14 @@ up.flow = (($) ->
   @param {Boolean} [options.requireMatch=true]
     Whether to raise an error if the given selector is missing in
     either the current page or in the response.
+  @param {String} [options.layer='auto']
+    The name of the layer that ought to be updated. Valid values are
+    `auto`, `page`, `modal` and `popup`.
+
+    If set to `auto` (default), Unpoly will try to find a match in the
+    same layer as the element that triggered the replacement (see `options.origin`).
+    If that element is not known, or no match was found in that layer,
+    Unpoly will search in other layers, starting from the topmost layer.
   @return {Promise}
     A promise that will be resolved when the page has been updated.
   @stable
@@ -321,9 +329,10 @@ up.flow = (($) ->
   extract = (selectorOrElement, html, options) ->
     up.log.group 'Extracting %s from %d bytes of HTML', selectorOrElement, html?.length, ->
       options = u.options(options,
-        historyMethod: 'push',
-        requireMatch: true,
+        historyMethod: 'push'
+        requireMatch: true
         keep: true
+        layer: 'auto'
       )
       selector = resolveSelector(selectorOrElement, options.origin)
       response = parseResponse(html, options)
@@ -350,7 +359,33 @@ up.flow = (($) ->
       promise = promise.then(options.afterSwap) if options.afterSwap
       promise
 
+  findOldFragmentInPopup = (selector) ->
+    first(".up-popup #{selector}")
+
+  findOldFragmentInModal = (selector) ->
+    first(".up-modal #{selector}")
+
+  findOldFragmentAnywhere = (selector) ->
+    first(selector)
+
   findOldFragment = (selector, options) ->
+    chain = undefined
+    switch options.layer
+      when 'popup'
+        chain = [findOldFragmentInPopup]
+      when 'modal'
+        chain = [findOldFragmentInModal]
+      when 'page'
+        chain = [???]
+      when 'auto'
+        if options.origin
+          ???
+        else
+          chain = [findOldFragmentInPopup, findOldFragmentInModal, findOldFragmentAnywhere]
+    chain.push(oldFragmentNotFound)
+
+
+
     # Prefer to replace fragments in an open popup or modal
     first(".up-popup #{selector}") ||
       first(".up-modal #{selector}") ||
@@ -359,7 +394,9 @@ up.flow = (($) ->
 
   oldFragmentNotFound = (selector, options) ->
     if options.requireMatch
-      message = 'Could not find selector %s in current body HTML'
+      layerProse = options.layer
+      layerProse = 'page, modal or popup' if layerProse == 'auto'
+      message = "Could not find selector %s in the current #{layerProse}"
       if message[0] == '#'
         message += ' (avoid using IDs)'
       u.error(message, selector)
@@ -711,19 +748,19 @@ up.flow = (($) ->
     or `undefined` if no such element was given.
   @experimental
   ###
-  first = (selectorOrElement) ->
-    elements = undefined
-    if u.isString(selectorOrElement)
-      elements = $(selectorOrElement).get()
-    else
-      elements = selectorOrElement
+  first = (selectorOrElement, options) ->
+    options = u.options(options, layer: 'auto')
+    elements = $(selectorOrElement)
     $match = undefined
     for element in elements
       $element = $(element)
-      if isRealElement($element)
+      if isRealElement($element) && matchesLayer($element, options.layer)
         $match = $element
         break
     $match
+
+  matchesLayer = ($element, layer) ->
+    throw "bu"
 
   ###*
   Destroys the given element or selector.
