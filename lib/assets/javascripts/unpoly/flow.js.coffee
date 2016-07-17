@@ -360,38 +360,8 @@ up.flow = (($) ->
       promise = promise.then(options.afterSwap) if options.afterSwap
       promise
 
-  findOldFragmentInPopup = (selector) ->
-    first(".up-popup #{selector}")
-
-  findOldFragmentInModal = (selector) ->
-    first(".up-modal #{selector}")
-
-  findOldFragmentAnywhere = (selector) ->
-    first(selector)
-
   findOldFragment = (selector, options) ->
-    chain = undefined
-    switch options.layer
-      when 'popup'
-        chain = [findOldFragmentInPopup]
-      when 'modal'
-        chain = [findOldFragmentInModal]
-      when 'page'
-        chain = [???]
-      when 'auto'
-        if options.origin
-          ???
-        else
-          chain = [findOldFragmentInPopup, findOldFragmentInModal, findOldFragmentAnywhere]
-    chain.push(oldFragmentNotFound)
-
-
-
-    # Prefer to replace fragments in an open popup or modal
-    first(".up-popup #{selector}") ||
-      first(".up-modal #{selector}") ||
-      first(selector) ||
-      oldFragmentNotFound(selector, options)
+    first(selector, options) || oldFragmentNotFound(selector, options)
 
   oldFragmentNotFound = (selector, options) ->
     if options.requireMatch
@@ -773,9 +743,9 @@ up.flow = (($) ->
     $match
 
   firstInLayer = (selectorOrElement, layer) ->
-    elements = $(selectorOrElement)
+    $elements = $(selectorOrElement)
     $match = undefined
-    for element in elements
+    for element in $elements
       $element = $(element)
       if isRealElement($element) && matchesLayer($element, layer)
         $match = $element

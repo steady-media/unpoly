@@ -264,7 +264,7 @@ describe 'up.util', ->
 
       it 'removes the given string from the given array', ->
         array = ['a', 'b', 'c']
-        u.remove(array, 'b')
+        up.util.remove(array, 'b')
         expect(array).toEqual ['a', 'c']
 
       it 'removes the given object from the given array', ->
@@ -272,7 +272,7 @@ describe 'up.util', ->
         obj2 = { 'key': 2 }
         obj3 = { 'key': 3 }
         array = [obj1, obj2, obj3]
-        u.remove(array, obj2)
+        up.util.remove(array, obj2)
         expect(array).toEqual [obj1, obj3]
 
 

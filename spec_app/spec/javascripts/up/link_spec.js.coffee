@@ -383,10 +383,11 @@ describe 'up.link', ->
           $linkInPopup = $('.up-popup').affix('a[href="/bar"][up-target=".target"]')
           $linkInPopup.click()
 
+          @respondWith '<div class="target">new text from popup link</div>'
+
           expect($('.document .target')).toHaveText('new text from document link')
           expect($('.up-popup .target')).toHaveText('new text from popup link')
 
-          @respondWith '<div class="target">new text from popup link</div>'
 
         describe 'with [up-transition] modifier', ->
 
