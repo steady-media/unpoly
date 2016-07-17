@@ -183,9 +183,6 @@ up.flow = (($) ->
     history change for the current URL.
   @param {Boolean} [options.cache]
     Whether to use a [cached response](/up.proxy) if available.
-  @param {Element|jQuery} [options.origin]
-    The element that triggered the replacement. The element's selector will
-    be substituted for the `&` shorthand in the target selector.
   @param {String} [options.historyMethod='push']
   @param {Object} [options.headers={}]
     An object of additional header key/value pairs to send along
@@ -193,6 +190,10 @@ up.flow = (($) ->
   @param {Boolean} [options.requireMatch=true]
     Whether to raise an error if the given selector is missing in
     either the current page or in the response.
+  @param {Element|jQuery} [options.origin]
+    The element that triggered the replacement.
+
+    The element's selector will be substituted for the `&` shorthand in the target selector.
   @param {String} [options.layer='auto']
     The name of the layer that ought to be updated. Valid values are
     `auto`, `page`, `modal` and `popup`.
@@ -743,24 +744,55 @@ up.flow = (($) ->
 
   @function up.first
   @param {String|Element|jQuery|Array<Element>} selectorOrElement
-  @return {jQuery}
+  @param {String} options.layer
+    The name of the layer in which to find the element. Valid values are
+    `any`, `auto`, `page`, `modal` and `popup`.
+  @param {}
+  @return {jQuery|Undefined}
     The first element that is neither a ghost or being destroyed,
     or `undefined` if no such element was given.
   @experimental
   ###
   first = (selectorOrElement, options) ->
     options = u.options(options, layer: 'auto')
+    if options.layer == 'auto'
+      firstInPriority(selectorOrElement, options.origin)
+    else
+      firstInLayer(selectorOrElement, options.layer)
+
+  firstInPriority = (selectorOrElement, origin) ->
+    layers = ['popup', 'modal', 'page']
+    $match = undefined
+    if u.isPresent(origin)
+      originLayer = layerOf(origin)
+      u.remove(layers, originLayer)
+      layers.unshift(originLayer)
+    for layer in layers
+      if $match = firstInLayer(selectorOrElement, layer)
+        break
+    $match
+
+  firstInLayer = (selectorOrElement, layer) ->
     elements = $(selectorOrElement)
     $match = undefined
     for element in elements
       $element = $(element)
-      if isRealElement($element) && matchesLayer($element, options.layer)
+      if isRealElement($element) && matchesLayer($element, layer)
         $match = $element
         break
     $match
 
-  matchesLayer = ($element, layer) ->
-    throw "bu"
+  layerOf = (selectorOrElement) ->
+    $element = $(selectorOrElement)
+    if up.popup.contains($element)
+      'popup'
+    else if up.modal.contains($element)
+      'modal'
+    else
+      'page'
+
+  matchesLayer = (selectorOrElement, layer) ->
+    layerOf(selectorOrElement) == layer
 
   ###*
   Destroys the given element or selector.
