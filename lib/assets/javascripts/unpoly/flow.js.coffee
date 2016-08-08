@@ -231,6 +231,10 @@ up.flow = (($) ->
       cache: options.cache
       preload: options.preload
       headers: options.headers
+      
+    options.inspect =
+      label: 'Open'
+      action: -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
 
     promise = up.ajax(request)
 

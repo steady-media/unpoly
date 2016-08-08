@@ -1,0 +1,31 @@
+<div class="example">
+
+  <h2>Link to unexpected response</h2>
+
+  <p>
+    <a href="/error_test/unexpected_response" up-target=".link-target">Link</a>
+  </p>
+
+  <div class="area link-target">
+    .link-target
+  </div>
+
+</div>
+
+<div class="example">
+
+  <h2>Form to unexpected response</h2>
+
+  <%= form_tag "/error_test/unexpected_response", 'up-target' => '.form-target' do %>
+
+      <p>
+        <button type="submit">Submit</button>
+      </p>
+
+  <% end %>
+
+  <div class="area form-target">
+    .form-target
+  </div>
+
+</div>

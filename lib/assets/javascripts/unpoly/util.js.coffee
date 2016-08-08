@@ -1693,6 +1693,8 @@ up.util = (($) ->
         "<span class='up-error-variable'>#{escapeHtml(arg)}</span>"
       asHtml = up.browser.sprintfWithFormattedArgs(formatter, args...)
       $error.html(asHtml)
+      $button = $('<div class="up-error-button">Inspect</div>')
+      $button.prependTo($error)
     asString = up.browser.sprintf(args...)
     throw new Error(asString)
 
