@@ -232,9 +232,7 @@ up.flow = (($) ->
       preload: options.preload
       headers: options.headers
       
-    options.inspect =
-      label: 'Open'
-      action: -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
+    options.inspectResponse = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
 
     promise = up.ajax(request)
 
@@ -405,7 +403,8 @@ up.flow = (($) ->
       if child = $.find(selector, htmlElement)[0]
         $(child)
       else if options.requireMatch
-        u.error("Could not find selector %s in response %o", selector, html)
+        inspectAction = { label: 'Open response', callback: options.inspectResponse }
+        u.error(["Could not find selector %s in response %o", selector, html], action: inspectAction)
 
   updateHistory = (options) ->
     options = u.options(options, historyMethod: 'push')

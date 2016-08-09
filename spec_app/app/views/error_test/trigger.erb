@@ -19,6 +19,10 @@
   <%= form_tag "/error_test/unexpected_response", 'up-target' => '.form-target' do %>
 
       <p>
+        <input type="text" name="param" value="param-value">
+      </p>
+
+      <p>
         <button type="submit">Submit</button>
       </p>
 
@@ -29,3 +33,40 @@
   </div>
 
 </div>
+
+<script>
+
+  if (false) {
+
+    var html = '<!DOCTYPE html>\
+    <html>\
+    <head>\
+    <title>Integration test - Unpoly</title>\
+    <link rel="stylesheet" media="all" href="/assets/integration_test-6697c9a85c007956bf460adc74ba46bc.css" />\
+  <meta name="csrf-param" content="authenticity_token" />\
+  <meta name="csrf-token" content="CYCqVYIr0wbjErWnupydWZiO8WMqRn+z4BlHN4g4o3T3UN4hW2sDfQXFT3/ygZt41m0jo/YEl6syohm8b8DsYw==" />\
+  </head>\
+  <body>\
+  <div class="page">\
+    <div class="unexpected-response">\
+      unexpected response\
+    </div>\
+  \
+  </div>\
+  </body>\
+  </html>';
+
+    var selector = '.linx-target';
+
+    up.error(['Could not find selector %s in response %s', selector, html], {
+      inspect: {
+        label: 'Open response',
+        callback: function () {
+          alert("callback")
+        }
+      }
+    });
+
+  }
+
+</script>
