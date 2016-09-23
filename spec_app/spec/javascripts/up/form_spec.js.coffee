@@ -43,6 +43,39 @@ describe 'up.form', ->
               expect(callback).not.toHaveBeenCalled()
               done()
 
+          it 'debounces the callback when the { delay } option is given', (done) ->
+            $input = affix('input[value="old-value"]')
+            callback = jasmine.createSpy('change callback')
+            up.observe($input, { delay: 100 }, callback)
+            $input.val('new-value-1')
+            $input.trigger(eventName)
+            u.setTimer 50, ->
+              # 50 ms after change 1: We're still waiting for the 100ms delay to expire
+              expect(callback.calls.count()).toEqual(0)
+              done()
+              u.setTimer 100, ->
+                # 150 ms after change 1: The 100ms delay has expired
+                expect(callback.calls.count()).toEqual(1)
+                expect(callback.calls.mostRecent().args).toEqual('new-value-1', $input)
+                $input.val('new-value-2')
+                $input.trigger(eventName)
+                u.setTimer 40, ->
+                  # 40 ms after change 2: We change again, resetting the delay
+                  expect(callback.calls.count()).toEqual(1)
+                  $input.val('new-value-3')
+                  $input.trigger(eventName)
+                  u.setTimer 85, ->
+                    # 125 ms after change 2, which was superseded by change 3
+                    # 85 ms after change 3
+                    expect(callback.calls.count()).toEqual(1)
+                    u.setTimer 65, ->
+                    # 190 ms after change 2, which was superseded by change 3
+                    # 150 ms after change 3
+                    expect(callback.calls.count()).toEqual(2)
+                    expect(callback.calls.mostRecent().args).toEqual('new-value-3', $input)
+                    done()
+
+
           it "runs a callback in the same frame if the delay is 0 and it receives a '#{eventName}' event", ->
             $input = affix('input[value="old-value"]')
             callback = jasmine.createSpy('change callback')

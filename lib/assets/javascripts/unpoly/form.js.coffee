@@ -228,6 +228,9 @@ up.form = (($) ->
   @stable
   ###
   observe = (selectorOrElement, extraArgs...) ->
+
+    console.debug("extraArgs is %o", extraArgs)
+
     options = {}
     callbackArg = undefined
     if extraArgs.length == 1
@@ -235,6 +238,8 @@ up.form = (($) ->
     else if extraArgs.length > 1
       options = u.options(extraArgs[0])
       callbackArg = extraArgs[1]
+
+    console.debug("callbackArg is %o, options is %o", callbackArg, options)
 
     $element = $(selectorOrElement)
     $fields = u.multiSelector(config.fields).findWithSelf($element)
@@ -250,7 +255,8 @@ up.form = (($) ->
     delay = parseInt(delay)
 
     destructors = u.map $fields, (field) ->
-      observeField($(field), options, callback)
+      console.debug("This looks wrong: argument is called delay, but we pass it options")
+      observeField($(field), delay, callback)
 
     u.sequence(destructors...)
 
