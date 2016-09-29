@@ -56,14 +56,14 @@ describe 'up.form', ->
               u.setTimer 100, ->
                 # 150 ms after change 1: The 100ms delay has expired
                 expect(callback.calls.count()).toEqual(1)
-                expect(callback.calls.mostRecent().args).toEqual('new-value-1', $input)
+                expect(callback.calls.mostRecent().args).toEqual ['new-value-1', $input]
                 $input.val('new-value-2')
                 $input.trigger(eventName)
                 u.setTimer 40, ->
                   # 40 ms after change 2: We change again, resetting the delay
                   expect(callback.calls.count()).toEqual(1)
                   $input.val('new-value-3')
-                  $input.trigger(eventName)
+                  $input.trigger(eventName) 
                   u.setTimer 85, ->
                     # 125 ms after change 2, which was superseded by change 3
                     # 85 ms after change 3
@@ -72,7 +72,7 @@ describe 'up.form', ->
                     # 190 ms after change 2, which was superseded by change 3
                     # 150 ms after change 3
                     expect(callback.calls.count()).toEqual(2)
-                    expect(callback.calls.mostRecent().args).toEqual('new-value-3', $input)
+                    expect(callback.calls.mostRecent().args).toEqual ['new-value-3', $input]
                     done()
 
 
