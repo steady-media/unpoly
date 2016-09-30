@@ -48,8 +48,7 @@ describe 'up.form', ->
             it 'debounces the callback when the { delay } option is given', (done) ->
               $input = affix('input[value="old-value"]')
               callback = jasmine.createSpy('change callback')
-              console.debug("** observing with delay: 100")
-              stopObserve = up.observe($input, { delay: 100 }, callback)
+              up.observe($input, { delay: 100 }, callback)
               $input.val('new-value-1')
               $input.trigger(eventName)
               u.setTimer 50, ->
@@ -57,36 +56,48 @@ describe 'up.form', ->
                 expect(callback.calls.count()).toEqual(0)
                 u.setTimer 100, ->
                   # 150 ms after change 1: The 100ms delay has expired
-                  console.debug("1/ Expect %o to equal %o", callback.calls.count(), 1)
                   expect(callback.calls.count()).toEqual(1)
                   expect(callback.calls.mostRecent().args[0]).toEqual('new-value-1')
                   $input.val('new-value-2')
                   $input.trigger(eventName)
                   u.setTimer 40, ->
                     # 40 ms after change 2: We change again, resetting the delay
-                    console.debug("2/ Expect %o to equal %o", callback.calls.count(), 1)
                     expect(callback.calls.count()).toEqual(1)
                     $input.val('new-value-3')
                     $input.trigger(eventName)
                     u.setTimer 85, ->
                       # 125 ms after change 2, which was superseded by change 3
                       # 85 ms after change 3
-                      console.debug("3/ Expect %o to equal %o", callback.calls.count(), 1)
                       expect(callback.calls.count()).toEqual(1)
                       u.setTimer 65, ->
                         # 190 ms after change 2, which was superseded by change 3
                         # 150 ms after change 3
-                        console.debug("4/ Expect %o to equal %o", callback.calls.count(), 2)
                         expect(callback.calls.count()).toEqual(2)
                         expect(callback.calls.mostRecent().args[0]).toEqual('new-value-3')
-                        stopObserve()
                         done()
-                        console.debug('*** spec done')
-              console.debug('*** end of function')
 
-            it 'delays a callback if a previous async callback is taking long to execute'
+            it 'delays a callback if a previous async callback is taking long to execute', (done) ->
+              $input = affix('input[value="old-value"]')
+              callbackCount = 0
+              callback = ->
+                callbackCount += 1
+                u.promiseTimer(100)
+              up.observe($input, { delay: 1 }, callback)
+              $input.val('new-value-1')
+              $input.trigger(eventName)
+              u.setTimer 30, ->
+                # Callback has been called and takes 100 ms to complete
+                expect(callbackCount).toEqual(1)
+                $input.val('new-value-2')
+                $input.trigger(eventName)
+                u.setTimer 30, ->
+                  # Second callback is triggerd, but waits for first callback to complete
+                  expect(callbackCount).toEqual(1)
+                  u.setTimer 100, ->
+                    expect(callbackCount).toEqual(2)
+                    done()
 
-            it 'does not run multiple callbacks if a long-running callback if blocking multiple subsequent callbacks'
+            it 'does not run multiple callbacks if a long-running callback has been blocking multiple subsequent callbacks'
 
             it "runs a callback in the same frame if the delay is 0", ->
               console.debug('*** next example')
