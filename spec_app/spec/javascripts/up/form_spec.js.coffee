@@ -3,7 +3,7 @@ describe 'up.form', ->
   u = up.util
 
   describe 'Javascript functions', ->
-    
+
     describe 'up.observe', ->
 
       beforeEach ->
@@ -48,38 +48,48 @@ describe 'up.form', ->
             it 'debounces the callback when the { delay } option is given', (done) ->
               $input = affix('input[value="old-value"]')
               callback = jasmine.createSpy('change callback')
-              console.debug("Delay: 100")
-              up.observe($input, { delay: 100 }, callback)
+              console.debug("** observing with delay: 100")
+              stopObserve = up.observe($input, { delay: 100 }, callback)
               $input.val('new-value-1')
               $input.trigger(eventName)
               u.setTimer 50, ->
                 # 50 ms after change 1: We're still waiting for the 100ms delay to expire
                 expect(callback.calls.count()).toEqual(0)
-                done()
                 u.setTimer 100, ->
                   # 150 ms after change 1: The 100ms delay has expired
+                  console.debug("1/ Expect %o to equal %o", callback.calls.count(), 1)
                   expect(callback.calls.count()).toEqual(1)
-                  expect(callback.calls.mostRecent().args).toEqual ['new-value-1', $input]
+                  expect(callback.calls.mostRecent().args[0]).toEqual('new-value-1')
                   $input.val('new-value-2')
                   $input.trigger(eventName)
                   u.setTimer 40, ->
                     # 40 ms after change 2: We change again, resetting the delay
+                    console.debug("2/ Expect %o to equal %o", callback.calls.count(), 1)
                     expect(callback.calls.count()).toEqual(1)
                     $input.val('new-value-3')
                     $input.trigger(eventName)
                     u.setTimer 85, ->
                       # 125 ms after change 2, which was superseded by change 3
                       # 85 ms after change 3
+                      console.debug("3/ Expect %o to equal %o", callback.calls.count(), 1)
                       expect(callback.calls.count()).toEqual(1)
                       u.setTimer 65, ->
                         # 190 ms after change 2, which was superseded by change 3
                         # 150 ms after change 3
+                        console.debug("4/ Expect %o to equal %o", callback.calls.count(), 2)
                         expect(callback.calls.count()).toEqual(2)
-                        expect(callback.calls.mostRecent().args).toEqual ['new-value-3', $input]
+                        expect(callback.calls.mostRecent().args[0]).toEqual('new-value-3')
+                        stopObserve()
                         done()
+                        console.debug('*** spec done')
+              console.debug('*** end of function')
 
+            it 'delays a callback if a previous async callback is taking long to execute'
+
+            it 'does not run multiple callbacks if a long-running callback if blocking multiple subsequent callbacks'
 
             it "runs a callback in the same frame if the delay is 0", ->
+              console.debug('*** next example')
               $input = affix('input[value="old-value"]')
               callback = jasmine.createSpy('change callback')
               up.observe($input, { delay: 0 }, callback)
@@ -236,7 +246,7 @@ describe 'up.form', ->
     describe 'up.submit', ->
 
       describeCapability 'canPushState', ->
-      
+
         beforeEach ->
           @$form = affix('form[action="/path/to"][method="put"][up-target=".response"]')
           @$form.append('<input name="field1" value="value1">')
@@ -270,11 +280,11 @@ describe 'up.form', ->
             responseText:
               """
               text-before
-    
+
               <form>
                 error-messages
               </form>
-    
+
               text-after
               """
           expect(up.browser.url()).toEqual(@hrefBeforeExample)
@@ -338,12 +348,12 @@ describe 'up.form', ->
               expect(form.submit).toHaveBeenCalled()
 
       describeFallback 'canPushState', ->
-        
+
         it 'falls back to a vanilla form submission', ->
           $form = affix('form[action="/path/to"][method="put"][up-target=".response"]')
           form = $form.get(0)
           spyOn(form, 'submit')
-          
+
           up.submit($form)
           expect(form.submit).toHaveBeenCalled()
 
@@ -396,7 +406,7 @@ describe 'up.form', ->
 
     describe '[up-observe]', ->
 
-      it 'runs the Javascript code in the attribute value when a change is observed in the field', ->
+      it 'runs the Javascript code in the attribute value when a change is observed in the field', (done) ->
         $form = affix('form')
         window.observeCallbackSpy = jasmine.createSpy('observe callback')
         $field = $form.affix('input[val="old-value"][up-observe="window.observeCallbackSpy(value, $field.get(0))"]')
