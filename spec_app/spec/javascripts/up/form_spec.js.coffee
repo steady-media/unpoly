@@ -72,11 +72,11 @@ describe 'up.form', ->
                       # 85 ms after change 3
                       expect(callback.calls.count()).toEqual(1)
                       u.setTimer 65, ->
-                      # 190 ms after change 2, which was superseded by change 3
-                      # 150 ms after change 3
-                      expect(callback.calls.count()).toEqual(2)
-                      expect(callback.calls.mostRecent().args).toEqual ['new-value-3', $input]
-                      done()
+                        # 190 ms after change 2, which was superseded by change 3
+                        # 150 ms after change 3
+                        expect(callback.calls.count()).toEqual(2)
+                        expect(callback.calls.mostRecent().args).toEqual ['new-value-3', $input]
+                        done()
 
 
             it "runs a callback in the same frame if the delay is 0", ->
