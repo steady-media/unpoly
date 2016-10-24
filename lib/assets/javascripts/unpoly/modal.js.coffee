@@ -725,7 +725,12 @@ up.modal = (($) ->
   @selector [up-drawer]
   @param {String} up-drawer
     The CSS selector to extract from the response and open in the drawer.
-  @param {String} [up-position]
+  @param {String} [up-position='auto']
+    The side from which the drawer slides in.
+
+    Valid values are `'left'`, `'right'` and `'auto'`. If set to `'auto'`, the
+    drawer will slide in from left if the opening link is on the left half of the screen.
+    Otherwise it will slide in from the right.
   @experimental
   ###
   up.macro '[up-drawer]', ($link) ->
@@ -744,7 +749,12 @@ up.modal = (($) ->
         when 'left' then 'move-to-left'
         when 'right' then 'move-to-right'
     position: (options) ->
-      u.verticalScreenHalf(options.$link)
+      if u.isPresent(options.$link)
+        u.verticalScreenHalf(options.$link)
+      else
+        # In case the drawer was opened programmatically through `up.modal.open`,
+        # we might now know the link that was clicked on.
+        'left'
 
   # The framework is reset between tests
   up.on 'up:framework:reset', reset
