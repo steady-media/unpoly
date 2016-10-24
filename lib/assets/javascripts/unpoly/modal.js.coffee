@@ -178,6 +178,7 @@ up.modal = (($) ->
     url: null
     coveredUrl: null
     coveredTitle: null
+    position: null
     unshifters: []
 
   chain = new u.DivertibleChain()
@@ -568,12 +569,11 @@ up.modal = (($) ->
 
   \#\#\# Example
 
-  Let's implement a drawer that slides in from the right:
+  Unpoly's [`[up-drawer]`](/up-drawer) is itself a modal flavor. It is implemented like this:
 
       up.modal.flavor('drawer', {
         openAnimation: 'move-from-right',
-        closeAnimation: 'move-to-right',
-        maxWidth: 400
+        closeAnimation: 'move-to-right'
       }
 
   Modals with that flavor will have a container `<div class='up-modal' up-flavor='drawer'>...</div>`.
@@ -581,14 +581,14 @@ up.modal = (($) ->
 
       .up-modal[up-flavor='drawer'] {
 
-        // Align drawer on the right
-        .up-modal-viewport { text-align: right; }
+        .up-modal-dialog {
+          margin: 0;         // Remove margin so drawer starts at the screen edge
+          max-width: 350px;  // Set drawer size
+        }
 
-        // Remove margin so the drawer starts at the screen edge
-        .up-modal-dialog { margin: 0; }
-
-        // Stretch drawer background to full window height
-        .up-modal-content { min-height: 100vh; }
+        .up-modal-content {
+          min-height: 100vh; // Stretch background to full window height
+        }
       }
 
   @function up.modal.flavor
