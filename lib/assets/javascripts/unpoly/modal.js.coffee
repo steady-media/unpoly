@@ -137,14 +137,14 @@ up.modal = (($) ->
     sticky: false
     flavors: { default: {} }
 
-    template: (config) ->
+    template: (options) ->
       """
       <div class="up-modal">
         <div class="up-modal-backdrop"></div>
         <div class="up-modal-viewport">
           <div class="up-modal-dialog">
             <div class="up-modal-content"></div>
-            <div class="up-modal-close" up-close>#{flavorDefault('closeLabel')}</div>
+            <div class="up-modal-close" up-close>#{options.closeLabel}</div>
           </div>
         </div>
       </div>
@@ -191,10 +191,7 @@ up.modal = (($) ->
 
   templateHtml = ->
     template = flavorDefault('template')
-    if u.isFunction(template)
-      template(config)
-    else
-      template
+    u.evalOption(template, closeLabel: flavorDefault('closeLabel'))
 
   discardHistory = ->
     state.coveredTitle = null
@@ -203,6 +200,7 @@ up.modal = (($) ->
   createFrame = (target, options) ->
     $modal = $(templateHtml())
     $modal.attr('up-flavor', state.flavor)
+    $modal.attr('up-position', state.position)
     $dialog = $modal.find('.up-modal-dialog')
     $dialog.css('width', options.width) if u.isPresent(options.width)
     $dialog.css('max-width', options.maxWidth) if u.isPresent(options.maxWidth)
@@ -390,11 +388,15 @@ up.modal = (($) ->
     html = u.option(u.pluckKey(options, 'html'))
     target = u.option(u.pluckKey(options, 'target'), $link.attr('up-modal'), 'body')
     options.flavor = u.option(options.flavor, $link.attr('up-flavor'))
+    options.position = u.option(options.position, $link.attr('up-position'), flavorDefault('position', options.flavor))
+    options.position = u.evalOption(options.position, $link: $link)
     options.width = u.option(options.width, $link.attr('up-width'), flavorDefault('width', options.flavor))
     options.maxWidth = u.option(options.maxWidth, $link.attr('up-max-width'), flavorDefault('maxWidth', options.flavor))
     options.height = u.option(options.height, $link.attr('up-height'), flavorDefault('height'))
     options.animation = u.option(options.animation, $link.attr('up-animation'), flavorDefault('openAnimation', options.flavor))
+    options.animation = u.evalOption(options.animation, position: options.position)
     options.backdropAnimation = u.option(options.backdropAnimation, $link.attr('up-backdrop-animation'), flavorDefault('backdropOpenAnimation', options.flavor))
+    options.backdropAnimation = u.evalOption(options.backdropAnimation, position: options.position)
     options.sticky = u.option(options.sticky, u.castedAttr($link, 'up-sticky'), flavorDefault('sticky', options.flavor))
     options.closable = u.option(options.closable, u.castedAttr($link, 'up-closable'), flavorDefault('closable', options.flavor))
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
@@ -414,6 +416,7 @@ up.modal = (($) ->
         state.flavor = options.flavor
         state.sticky = options.sticky
         state.closable = options.closable
+        state.position = options.position
         if options.history
           state.coveredUrl = up.browser.url()
           state.coveredTitle = document.title
@@ -473,7 +476,9 @@ up.modal = (($) ->
 
     options = u.options(options)
     viewportCloseAnimation = u.option(options.animation, flavorDefault('closeAnimation'))
+    viewportCloseAnimation = u.evalOption(viewportCloseAnimation, position: state.position)
     backdropCloseAnimation = u.option(options.backdropAnimation, flavorDefault('backdropCloseAnimation'))
+    backdropCloseAnimation = u.evalOption(backdropCloseAnimation, position: state.position)
     animateOptions = up.motion.animateOptions(options, duration: flavorDefault('closeDuration'), easing: flavorDefault('closeEasing'))
 
     destroyOptions = u.options(
@@ -502,6 +507,7 @@ up.modal = (($) ->
         state.flavor = null
         state.sticky = null
         state.closable = null
+        state.position = null
         up.emit('up:modal:closed', message: 'Modal closed')
 
       promise
@@ -631,6 +637,8 @@ up.modal = (($) ->
   a modal dialog.
 
   @selector [up-modal]
+  @param {String} up-modal
+    The CSS selector that will be extracted from the response and displayed in a modal dialog.    
   @param {String} [up-confirm]
     A message that will be displayed in a cancelable confirmation dialog
     before the modal is opened.
@@ -711,6 +719,32 @@ up.modal = (($) ->
       # This way we can have buttons that close a modal when within a modal, but link to a destination if not.
       up.bus.consumeAction(event)
   )
+
+
+  ###*
+  @selector [up-drawer]
+  @param {String} up-drawer
+    The CSS selector to extract from the response and open in the drawer.
+  @param {String} [up-position]
+  @experimental
+  ###
+  up.macro '[up-drawer]', ($link) ->
+    target = $link.attr('up-drawer')
+    $link.attr
+      'up-modal': target
+      'up-flavor': 'drawer'
+
+  flavor 'drawer',
+    openAnimation: (options) ->
+      switch options.position
+        when 'left' then 'move-from-left'
+        when 'right' then 'move-from-right'
+    closeAnimation: (options) ->
+      switch options.position
+        when 'left' then 'move-to-left'
+        when 'right' then 'move-to-right'
+    position: (options) ->
+      u.verticalScreenHalf(options.$link)
 
   # The framework is reset between tests
   up.on 'up:framework:reset', reset

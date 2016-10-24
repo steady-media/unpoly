@@ -1382,6 +1382,19 @@ up.util = (($) ->
     obj
 
   ###*
+  If the given `value` is a function, calls the function with the given `args`.
+  Otherwise it just returns `value`.
+
+  @function up.util.evalOption
+  @internal
+  ###
+  evalOption = (value, args...) ->
+    if isFunction(value)
+      value(args...)
+    else
+      value
+
+  ###*
   @function up.util.cache
   @param {Number|Function} [config.size]
     Maximum number of cache entries.
@@ -1400,19 +1413,8 @@ up.util = (($) ->
 
     store = undefined
 
-    optionEvaluator = (name) ->
-      ->
-        value = config[name]
-        if isNumber(value)
-          value
-        else if isFunction(value)
-          value()
-        else
-          undefined
-
-    maxKeys = optionEvaluator('size')
-
-    expiryMillis = optionEvaluator('expiry')
+    maxKeys = -> evalOption(config.size)
+    expiryMillis = -> evalOption(config.expiry)
 
     normalizeStoreKey = (key) ->
       if config.key
@@ -1873,6 +1875,16 @@ up.util = (($) ->
     deferred.cancel = -> clearTimeout(timeout)
     deferred
 
+  verticalScreenHalf = ($element) ->
+    elementDims = measure($element)
+    screenDims = clientSize()
+    elementMid = elementDims.left + 0.5 * elementDims.width
+    screenMid = 0.5 * screenDims.width
+    if elementMid < screenMid
+      'left'
+    else
+      'right'
+
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -1983,6 +1995,8 @@ up.util = (($) ->
   sequence: sequence
   promiseTimer: promiseTimer
   previewable: previewable
+  evalOption: evalOption
+  verticalScreenHalf: verticalScreenHalf
 
 )($)
 
