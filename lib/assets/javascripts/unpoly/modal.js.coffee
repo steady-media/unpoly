@@ -152,7 +152,7 @@ up.modal = (($) ->
       """
 
   ###*
-  Register a new modal variant with its own default configuration, CSS or HTML template.
+  Define modal variants with their own default configuration, CSS or HTML template.
 
   \#\#\# Example
 
@@ -163,7 +163,12 @@ up.modal = (($) ->
         closeAnimation: 'move-to-right'
       }
 
-  Modals with that flavor will have a container `<div class='up-modal' up-flavor='drawer'>...</div>`.
+  Modals with that flavor will have a container with an `up-flavor` attribute:
+
+      <div class='up-modal' up-flavor='drawer'>
+        ...
+      </div>
+
   We can target the `up-flavor` attribute to override the default dialog styles:
 
       .up-modal[up-flavor='drawer'] {
