@@ -225,7 +225,7 @@ describe 'up.modal', ->
           up.modal.config.openDuration = 20
           up.modal.config.closeAnimation = 'fade-out'
           up.modal.config.closeDuration = 20
-          up.modal.flavor 'drawer',
+          up.modal.flavor 'custom-drawer',
             openAnimation: 'move-from-right'
             closeAnimation: 'move-to-right'
 
@@ -252,7 +252,7 @@ describe 'up.modal', ->
             ]
 
 
-            up.modal.extract('.target', '<div class="target">response2</div>', flavor: 'drawer')
+            up.modal.extract('.target', '<div class="target">response2</div>', flavor: 'custom-drawer')
             expect(animations).toEqual [
               { animation: 'fade-in', text: 'response1' },
               { animation: 'fade-out', text: 'response1' },

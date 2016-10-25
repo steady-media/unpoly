@@ -116,6 +116,8 @@ up.modal = (($) ->
   @param {Boolean} [options.sticky=false]
     If set to `true`, the modal remains
     open even it changes the page in the background.
+  @param {String} [options.flavor='dialog']
+    The default [flavor](/up.modal.flavor).
   @stable
   ###
   config = u.config
@@ -135,8 +137,7 @@ up.modal = (($) ->
     closeLabel: '×'
     closable: true
     sticky: false
-    flavors: { default: {} }
-
+    flavor: 'default'
     template: (options) ->
       """
       <div class="up-modal">
@@ -149,6 +150,42 @@ up.modal = (($) ->
         </div>
       </div>
       """
+
+  ###*
+  Register a new modal variant with its own default configuration, CSS or HTML template.
+
+  \#\#\# Example
+
+  Unpoly's [`[up-drawer]`](/up-drawer) is implemented as a modal flavor:
+
+      up.modal.flavors.drawer = {
+        openAnimation: 'move-from-right',
+        closeAnimation: 'move-to-right'
+      }
+
+  Modals with that flavor will have a container `<div class='up-modal' up-flavor='drawer'>...</div>`.
+  We can target the `up-flavor` attribute to override the default dialog styles:
+
+      .up-modal[up-flavor='drawer'] {
+
+        .up-modal-dialog {
+          margin: 0;         // Remove margin so drawer starts at the screen edge
+          max-width: 350px;  // Set drawer size
+        }
+
+        .up-modal-content {
+          min-height: 100vh; // Stretch background to full window height
+        }
+      }
+
+  @property up.modal.flavors
+  @param {Object} flavors
+    An object where the keys are flavor names (e.g. `'drawer') and
+    the values are the respective default configurations.
+  @experimental
+  ###
+  flavors = u.openConfig
+    default: {}
 
   ###*
   Returns the source URL for the fragment displayed in the current modal overlay,
@@ -189,6 +226,7 @@ up.modal = (($) ->
     state.reset()
     chain.reset()
     config.reset()
+    flavors.reset()
 
   templateHtml = ->
     template = flavorDefault('template')
@@ -388,7 +426,7 @@ up.modal = (($) ->
     url = u.option(u.pluckKey(options, 'url'), $link.attr('up-href'), $link.attr('href'))
     html = u.option(u.pluckKey(options, 'html'))
     target = u.option(u.pluckKey(options, 'target'), $link.attr('up-modal'), 'body')
-    options.flavor = u.option(options.flavor, $link.attr('up-flavor'))
+    options.flavor = u.option(options.flavor, $link.attr('up-flavor'), config.flavor)
     options.position = u.option(options.position, $link.attr('up-position'), flavorDefault('position', options.flavor))
     options.position = u.evalOption(options.position, $link: $link)
     options.width = u.option(options.width, $link.attr('up-width'), flavorDefault('width', options.flavor))
@@ -564,41 +602,8 @@ up.modal = (($) ->
     $element = $(elementOrSelector)
     $element.closest('.up-modal').length > 0
 
-  ###*
-  Register a new modal variant with its own default configuration, CSS or HTML template.
-
-  \#\#\# Example
-
-  Unpoly's [`[up-drawer]`](/up-drawer) is itself a modal flavor. It is implemented like this:
-
-      up.modal.flavor('drawer', {
-        openAnimation: 'move-from-right',
-        closeAnimation: 'move-to-right'
-      }
-
-  Modals with that flavor will have a container `<div class='up-modal' up-flavor='drawer'>...</div>`.
-  We can target the `up-flavor` attribute override the default dialog styles:
-
-      .up-modal[up-flavor='drawer'] {
-
-        .up-modal-dialog {
-          margin: 0;         // Remove margin so drawer starts at the screen edge
-          max-width: 350px;  // Set drawer size
-        }
-
-        .up-modal-content {
-          min-height: 100vh; // Stretch background to full window height
-        }
-      }
-
-  @function up.modal.flavor
-  @param {String} name
-    The name of the new flavor.
-  @param {Object} [overrideConfig]
-    An object whose properties override the defaults in [`/up.modal.config`](/up.modal.config).
-  @experimental
-  ###
   flavor = (name, overrideConfig = {}) ->
+    up.log.warn 'The up.modal.flavor function is deprecated. Use the up.modal.flavors property instead.'
     u.extend(flavorOverrides(name), overrideConfig)
 
   ###*
@@ -610,7 +615,7 @@ up.modal = (($) ->
   @internal
   ###
   flavorOverrides = (flavor) ->
-    config.flavors[flavor] ||= {}
+    flavors[flavor] ||= {}
 
   ###*
   Returns the config option for the current flavor.
@@ -720,7 +725,6 @@ up.modal = (($) ->
       up.bus.consumeAction(event)
   )
 
-
   ###*
   @selector [up-drawer]
   @param {String} up-drawer
@@ -739,7 +743,17 @@ up.modal = (($) ->
       'up-modal': target
       'up-flavor': 'drawer'
 
-  flavor 'drawer',
+  ###*
+  Sets default options for future drawers.
+
+  @property up.modal.flavors.drawer
+  @param {Object} config
+    Default options for future drawers.
+
+    See [`up.modal.config`] for available options.
+  @experimental
+  ###
+  flavors.drawer =
     openAnimation: (options) ->
       switch options.position
         when 'left' then 'move-from-left'
@@ -750,7 +764,7 @@ up.modal = (($) ->
         when 'right' then 'move-to-right'
     position: (options) ->
       if u.isPresent(options.$link)
-        u.verticalScreenHalf(options.$link)
+        u.horizontalScreenHalf(options.$link)
       else
         # In case the drawer was opened programmatically through `up.modal.open`,
         # we might now know the link that was clicked on.
@@ -767,8 +781,9 @@ up.modal = (($) ->
   url: -> state.url
   coveredUrl: -> state.coveredUrl
   config: config
+  flavors: flavors
   contains: contains
   isOpen: isOpen
-  flavor: flavor
+  flavor: flavor # deprecated
 
 )(jQuery)

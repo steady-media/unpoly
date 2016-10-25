@@ -1503,16 +1503,29 @@ up.util = (($) ->
 
   ###*
   @function up.util.config
+  @param {Object|Function} blueprint
+    Default configuration options.
+    Will be restored by calling `reset` on the returned object.
+  @return {Object}
+    An object with a `reset` function.
   @internal
   ###
-  config = (blueprint = {}) ->
+  config = (blueprint) ->
+    hash = openConfig(blueprint)
+    Object.preventExtensions(hash)
+    hash
+
+  ###*
+  @function up.util.openConfig
+  @internal
+  ###
+  openConfig = (blueprint = {}) ->
     hash = {}
     hash.reset = ->
       newOptions = blueprint
       newOptions = newOptions() if isFunction(newOptions)
       extend(hash, newOptions)
     hash.reset()
-    Object.preventExtensions(hash)
     hash
 
   ###*
@@ -1875,7 +1888,14 @@ up.util = (($) ->
     deferred.cancel = -> clearTimeout(timeout)
     deferred
 
-  verticalScreenHalf = ($element) ->
+  ###*
+  Returns `'left'` if the center of the given element is in the left 50% of the screen.
+  Otherwise returns `'right'`.
+
+  @function up.util.horizontalScreenHalf
+  @internal
+  ###
+  horizontalScreenHalf = ($element) ->
     elementDims = measure($element)
     screenDims = clientSize()
     elementMid = elementDims.left + 0.5 * elementDims.width
@@ -1977,6 +1997,7 @@ up.util = (($) ->
   scrollbarWidth: scrollbarWidth
   documentHasVerticalScrollbar: documentHasVerticalScrollbar
   config: config
+  openConfig: openConfig
   cache: cache
   unwrapElement: unwrapElement
   multiSelector: multiSelector
@@ -1996,7 +2017,7 @@ up.util = (($) ->
   promiseTimer: promiseTimer
   previewable: previewable
   evalOption: evalOption
-  verticalScreenHalf: verticalScreenHalf
+  horizontalScreenHalf: horizontalScreenHalf
 
 )($)
 
