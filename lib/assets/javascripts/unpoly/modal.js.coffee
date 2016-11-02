@@ -186,7 +186,7 @@ up.modal = (($) ->
 
   @property up.modal.flavors
   @param {Object} flavors
-    An object where the keys are flavor names (e.g. `'drawer') and
+    An object where the keys are flavor names (e.g. `'drawer'`) and
     the values are the respective default configurations.
   @experimental
   ###
@@ -770,7 +770,7 @@ up.modal = (($) ->
   @param {Object} config
     Default options for future drawers.
 
-    See [`up.modal.config`] for available options.
+    See [`up.modal.config`](/up.modal.config) for available options.
   @experimental
   ###
   flavors.drawer =
