@@ -48,27 +48,31 @@ up.util = (($) ->
   By default hashes are ignored, search queries are included.
   
   @function up.util.normalizeUrl
-  @param {Boolean} [options.hash=false]
-    Whether to include an `#hash` anchor in the normalized URL
-  @param {Boolean} [options.search=true]
-    Whether to include a `?query` string in the normalized URL
+  @param {Boolean} [options.pathOnly=false]
+    Whether to omit protocol, host and port from the normalized URL
   @param {Boolean} [options.stripTrailingSlash=true]
     Whether to strip a trailing slash from the pathname
+  @param {Boolean} [options.search=true]
+    Whether to include a `?query` string in the normalized URL
+  @param {Boolean} [options.hash=false]
+    Whether to include an `#hash` anchor in the normalized URL
   @internal
   ###
-  normalizeUrl = (urlOrAnchor, options) ->
+  normalizeUrl = (urlOrAnchor, options = {}) ->
     anchor = parseUrl(urlOrAnchor)
-    normalized = anchor.protocol + "//" + anchor.hostname
-    normalized += ":#{anchor.port}" unless isStandardPort(anchor.protocol, anchor.port)
+    normalized = ''
+    unless options.pathOnly
+      normalized += anchor.protocol + "//" + anchor.hostname
+      normalized += ":#{anchor.port}" unless isStandardPort(anchor.protocol, anchor.port)
     pathname = anchor.pathname
     # Some IEs don't include a leading slash in the #pathname property.
     # We have seen this in IE11 and W3Schools claims it happens in IE9 or earlier
     # http://www.w3schools.com/jsref/prop_anchor_pathname.asp
     pathname = "/#{pathname}" unless pathname[0] == '/'
-    pathname = pathname.replace(/\/$/, '') unless options?.stripTrailingSlash == false
+    pathname = pathname.replace(/\/$/, '') unless options.stripTrailingSlash == false
     normalized += pathname
-    normalized += anchor.hash if options?.hash == true
-    normalized += anchor.search unless options?.search == false
+    normalized += anchor.hash if options.hash == true
+    normalized += anchor.search unless options.search == false
     normalized
 
   ###*

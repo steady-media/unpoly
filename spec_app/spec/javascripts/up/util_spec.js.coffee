@@ -408,6 +408,13 @@ describe 'up.util', ->
       it 'normalizes a full URL', ->
         expect(up.util.normalizeUrl('http://example.com/foo/bar')).toBe('http://example.com/foo/bar')
 
+      describe 'with { pathOnly: true } option', ->
+
+        it 'omits protocol, hostname and port', ->
+          normalized = up.util.normalizeUrl('http://example.com/foo/bar', pathOnly: true)
+          expect(normalized).toBe('/foo/bar')
+        
+
     describe 'up.util.detect', ->
 
       it 'finds the first element in the given array that matches the given tester', ->
