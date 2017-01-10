@@ -344,23 +344,29 @@ up.flow = (($) ->
       )
 
       selector = resolveSelector(selectorOrElement, options.origin)
-      response = parseResponse(html, options)
-      options.title = response.title() if shouldExtractTitle(options)
 
       up.layout.saveScroll() unless options.saveScroll == false
 
       promise = u.resolvedPromise()
+
       promise = promise.then(options.beforeSwap) if options.beforeSwap
-      promise = promise.then -> updateHistory(options)
+
       promise = promise.then ->
+
+        response = parseResponse(html, options)
+        implantSteps = parseImplantSteps(selector, response, options)
+
+        options.title = response.title() if shouldExtractTitle(options)
+        updateHistory(options)
+
         swapPromises = []
-        for step in parseImplantSteps(selector, options)
+        for step in implantSteps
+          # step.$old = findOldFragment(selector, options)
+          # step.$new = response.first(selector)
           up.log.group 'Updating %s', step.selector, ->
-            $old = findOldFragment(step.selector, options)
-            $new = response.first(step.selector)
-            if $old && $new
-              filterScripts($new, options)
-              swapPromise = swapElements($old, $new, step.pseudoClass, step.transition, options)
+            if step.$old && step.$new
+              filterScripts(step.$new, options)
+              swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
               swapPromises.push(swapPromise)
               options.reveal = false
         # Delay all further links in the promise chain until all fragments have been swapped
@@ -621,7 +627,7 @@ up.flow = (($) ->
   @stable
   ###
 
-  parseImplantSteps = (selector, options) ->
+  parseImplantSteps = (selector, response, options) ->
     transitionArg = options.transition || options.animation || 'none'
     comma = /\ *,\ */
     disjunction = selector.split(comma)
@@ -640,7 +646,13 @@ up.flow = (($) ->
         selector = 'body'
       pseudoClass = selectorParts[2]
       transition = transitions[i] || u.last(transitions)
+
+      $old = findOldFragment(selector, options)
+      $new = response.first(selector)
+
       selector: selector
+      $old: $old
+      $new: $new
       pseudoClass: pseudoClass
       transition: transition
 
