@@ -360,6 +360,22 @@ describe 'up.flow', ->
               expect($('#second span')).toHaveText('old second')
               done()
 
+          describe 'when selectors are missing on the page before the request was made', ->
+
+            it 'tries selectors from options.fallbackTargets before making a request'
+
+            it 'throws an error if all alternatives are exhausted'
+
+          describe 'when selectors are missing on the page after the request was made', ->
+
+            it 'tries selectors from options.fallbackTargets before making a request'
+
+            it 'throws an error if all alternatives are exhausted'
+
+          describe 'when selectors are missing in the response', ->
+
+            it 'does not try other selectors and fails immediately'
+
         describe 'execution of script tags', ->
 
           beforeEach ->
