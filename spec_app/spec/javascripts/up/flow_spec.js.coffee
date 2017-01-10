@@ -229,24 +229,6 @@ describe 'up.flow', ->
               @respond(status: 500)
               expect(up.flow.source('.middle')).toEndWith('/previous-source')
 
-        it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
-          $first = affix('.boxx#first')
-          $firstChild = $('<span class="first-child">old first</span>').appendTo($first)
-          $second = affix('.boxx#second')
-          $secondChild = $('<span class="second-child">old second</span>').appendTo($second)
-
-          promise = up.replace('.boxx:has(.first-child)', '/path')
-          @respondWith """
-            <div class="boxx" id="first">
-              <span class="first-child">new first</span>
-            </div>
-            """
-
-          promise.then ->
-            expect($('#first span')).toHaveText('new first')
-            expect($('#second span')).toHaveText('old second')
-            done()
-
         describe 'document title', ->
 
           it "sets the document title to a 'title' tag in the response", ->
@@ -358,6 +340,24 @@ describe 'up.flow', ->
               expect($('.before')).toHaveText('new-beforeold-before')
               expect($('.middle')).toHaveText('new-middle')
               expect($('.after')).toHaveText('old-afternew-after')
+              done()
+
+          it 'understands non-standard CSS selector extensions such as :has(...)', (done) ->
+            $first = affix('.boxx#first')
+            $firstChild = $('<span class="first-child">old first</span>').appendTo($first)
+            $second = affix('.boxx#second')
+            $secondChild = $('<span class="second-child">old second</span>').appendTo($second)
+
+            promise = up.replace('.boxx:has(.first-child)', '/path')
+            @respondWith """
+              <div class="boxx" id="first">
+                <span class="first-child">new first</span>
+              </div>
+              """
+
+            promise.then ->
+              expect($('#first span')).toHaveText('new first')
+              expect($('#second span')).toHaveText('old second')
               done()
 
         describe 'execution of script tags', ->
