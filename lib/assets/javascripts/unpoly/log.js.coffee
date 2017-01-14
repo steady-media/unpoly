@@ -79,7 +79,7 @@ up.log = (($) ->
   @internal
   ###
   warn = (message, args...) ->
-    if config.enabled && message
+    if message
       b.puts('warn', prefix(message), args...)
 
   ###*

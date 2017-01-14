@@ -177,6 +177,7 @@ up.link = (($) ->
     url = u.option($link.attr('up-href'), $link.attr('href'))
     target = u.option(options.target, $link.attr('up-target'), 'body')
     options.failTarget = u.option(options.failTarget, $link.attr('up-fail-target'), 'body')
+    options.fallback = u.option(options.fallback, $link.attr('up-fallback'))
     options.transition = u.option(options.transition, u.castedAttr($link, 'up-transition'), 'none')
     options.failTransition = u.option(options.failTransition, u.castedAttr($link, 'up-fail-transition'), 'none')
     options.history = u.option(options.history, u.castedAttr($link, 'up-history'))

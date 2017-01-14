@@ -1925,6 +1925,25 @@ up.util = (($) ->
     $insertion.replaceWith($new)
     $old
 
+  ###*
+  Flattens the given `array` a single level deep.
+
+  @function up.util.flatten
+  @param {Array} array
+    An array which might contain other arrays
+  @return {Array}
+    The flattened array
+  @internal
+  ###
+  flatten = (array) ->
+    flattened = []
+    for object in array
+      if isArray(object)
+        flattened = flattened.concat(object)
+      else
+        flattened.push(object)
+    flattened
+
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -2040,6 +2059,7 @@ up.util = (($) ->
   evalOption: evalOption
   horizontalScreenHalf: horizontalScreenHalf
   detachWith: detachWith
+  flatten: flatten
 
 )($)
 

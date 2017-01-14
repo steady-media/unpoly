@@ -364,17 +364,19 @@ describe 'up.flow', ->
 
             it 'tries selectors from options.fallbackTargets before making a request'
 
-            it 'throws an error if all alternatives are exhausted'
+            it 'returns a rejected promise if all alternatives are exhausted'
 
           describe 'when selectors are missing on the page after the request was made', ->
 
-            it 'tries selectors from options.fallbackTargets before making a request'
+            it 'tries selectors from options.fallbackTargets before swapping elements'
 
-            it 'throws an error if all alternatives are exhausted'
+            it 'returns a rejected promise if all alternatives are exhausted'
 
           describe 'when selectors are missing in the response', ->
 
-            it 'does not try other selectors and fails immediately'
+            it 'tries selectors from options.fallbackTargets before swapping elements'
+
+            it 'returns a rejected promise if all alternatives are exhausted'
 
         describe 'execution of script tags', ->
 

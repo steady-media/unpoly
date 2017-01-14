@@ -26,6 +26,8 @@ up.flow = (($) ->
   @stable
   ###
   config = u.config
+    fallbacks: ['body']
+    fallbackTransition: 'none'
     runInlineScripts: true
     runLinkedScripts: false
 
@@ -63,11 +65,11 @@ up.flow = (($) ->
     if u.isString(selectorOrElement)
       selector = selectorOrElement
       if u.contains(selector, '&')
-        if origin
+        if u.isPresent(origin) # isPresent returns false for empty jQuery collection
           originSelector = u.selectorForElement(origin)
           selector = selector.replace(/\&/, originSelector)
         else
-          up.fail("Found origin reference (%s) in selector %s, but options.origin is missing", '&', selector)
+          up.fail("Found origin reference (%s) in selector %s, but no origin was given", '&', selector)
     else
       selector = u.selectorForElement(selectorOrElement)
     selector
@@ -213,14 +215,14 @@ up.flow = (($) ->
   replace = (selectorOrElement, url, options) ->
     up.puts "Replacing %s from %s (%o)", selectorOrElement, url, options
     options = u.options(options)
-    target = resolveSelector(selectorOrElement, options.origin)
-    failTarget = u.option(options.failTarget, 'body')
-    failTarget = resolveSelector(failTarget, options.origin)
 
     if !up.browser.canPushState() && options.history != false
       unless options.preload
         up.browser.loadPage(url, u.only(options, 'method', 'data'))
       return u.unresolvablePromise()
+
+    target = bestExistingSelector([selectorOrElement, options.fallback, config.fallbacks], options.origin, 'target')
+    failTarget = bestExistingSelector([options.failTarget, options.failFallback, config.failFallbacks], options.origin, 'failure target')
 
     request =
       url: url
@@ -293,6 +295,54 @@ up.flow = (($) ->
     else
       extract(selector, xhr.responseText, options)
 
+  bestExistingSelector = (candidates, origin, humanized) ->
+    candidates = u.flatten(candidates)
+    candidates = u.compact(candidates) # options.failTarget might be undefined
+    candidates = u.uniq(candidates) # somebody might include 'body' twice
+
+    for candidate in candidates
+      resolved = resolveSelector(candidate, origin)
+      if $(resolved).length
+        return resolved
+      else
+        up.warn('Could not find %s in current page', candidate)
+
+    # If we haven't returned from the function at this point,
+    # no selector candidate exists in the current page
+    up.fail('Could not find %s in current page (tried %o)', humanized, candidates)
+
+  bestImplantSteps = (selectorCandidates, response, options) ->
+    success = false
+    anyOldMatch = false
+    anyNewMatch = false
+    for selectorCandidate in selectorCandidates
+      implantSteps = parseImplantSteps(selectorCandidate, response, options)
+      oldMatch = implantSteps.all (step) -> step.$old
+      newMatch = implantSteps.all (step) -> step.$new
+      anyOldMatch ||= oldMatch
+      anyNewMatch ||= newMatch
+      success = oldMatch && newMatch
+      if success
+        if selector != selectorCandidate
+          selector = selectorCandidate
+          options.transition = config.fallbackTransition
+        break
+
+    unless success
+      if anyOldMatch && anyNewMatch
+        message = "Could not match targets in current page and response"
+      else if anyOldMatch && !anyNewMatch
+        message = "Could not find target in response"
+      else if !anyOldMatch && anyNewMatch
+        message = "Could not find target in current page"
+      else
+        message = "Target missing from both current page and response"
+
+      inspectAction = { label: 'Open response', callback: options.inspectResponse }
+      up.fail(["#{message} (tried %o)", selectorCandidates], action: inspectAction)
+
+    implantSteps
+
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))
 
@@ -343,34 +393,11 @@ up.flow = (($) ->
         layer: 'auto'
       )
 
-      selector = resolveSelector(selectorOrElement, options.origin)
-
       up.layout.saveScroll() unless options.saveScroll == false
 
       promise = u.resolvedPromise()
-
       promise = promise.then(options.beforeSwap) if options.beforeSwap
-
-      promise = promise.then ->
-
-        response = parseResponse(html, options)
-        implantSteps = parseImplantSteps(selector, response, options)
-
-        options.title = response.title() if shouldExtractTitle(options)
-        updateHistory(options)
-
-        swapPromises = []
-        for step in implantSteps
-          # step.$old = findOldFragment(selector, options)
-          # step.$new = response.first(selector)
-          up.log.group 'Updating %s', step.selector, ->
-            if step.$old && step.$new
-              filterScripts(step.$new, options)
-              swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
-              swapPromises.push(swapPromise)
-              options.reveal = false
-        # Delay all further links in the promise chain until all fragments have been swapped
-        return $.when(swapPromises...)
+      promise = promise.then -> doSwap(selectorOrElement, html, options)
       promise = promise.then(options.afterSwap) if options.afterSwap
       promise
 
@@ -385,6 +412,23 @@ up.flow = (($) ->
       if message[0] == '#'
         message += ' (avoid using IDs)'
       up.fail(message, selector)
+
+  doSwap = (selectorOrElement, html, options) ->
+    response = parseResponse(html, options)
+    implantSteps = bestImplantSteps([selectorOrElement, options.fallback, config.fallbacks], response, options)
+
+    options.title = response.title() if shouldExtractTitle(options)
+    updateHistory(options)
+
+    swapPromises = []
+    for step in implantSteps
+      up.log.group 'Updating %s', step.selector, ->
+        filterScripts(step.$new, options)
+        swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
+        swapPromises.push(swapPromise)
+        options.reveal = false # only reveal the first selector atom in the union
+    # Delay all further links in the promise chain until all fragments have been swapped
+    return $.when(swapPromises...)
 
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)
@@ -627,7 +671,8 @@ up.flow = (($) ->
   @stable
   ###
 
-  parseImplantSteps = (selector, response, options) ->
+  parseImplantSteps = (selectorOrElement, response, options) ->
+    selector = resolveSelector(selectorOrElement, options.origin)
     transitionArg = options.transition || options.animation || 'none'
     comma = /\ *,\ */
     disjunction = selector.split(comma)
@@ -644,6 +689,7 @@ up.flow = (($) ->
         # If someone really asked us to replace the <html> root, the best
         # we can do is replace the <body>.
         selector = 'body'
+
       pseudoClass = selectorParts[2]
       transition = transitions[i] || u.last(transitions)
 

@@ -440,6 +440,12 @@ describe 'up.link', ->
                 expect(u.opacity($newGhost)).toBeAround(0.5, 0.15)
                 done()
 
+        desribe 'wih a CSS selector in the [up-fallback] attribute', ->
+
+          it 'uses the fallback selector if the [up-target] CSS does not exist on the page'
+
+          it 'ignores the fallback selector if the [up-target] CSS exists on the page'
+
       it 'does not add a history entry when an up-history attribute is set to "false"', ->
         oldPathname = location.pathname
         affix('.target')

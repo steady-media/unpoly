@@ -117,6 +117,7 @@ up.form = (($) ->
     target = u.option(options.target, $form.attr('up-target'), 'body')
     url = u.option(options.url, $form.attr('action'), up.browser.url())
     options.failTarget = u.option(options.failTarget, $form.attr('up-fail-target')) || u.selectorForElement($form)
+    options.fallback = u.option(options.fallback, $form.attr('up-fallback'))
     options.history = u.option(options.history, u.castedAttr($form, 'up-history'), true)
     options.transition = u.option(options.transition, u.castedAttr($form, 'up-transition'), 'none')
     options.failTransition = u.option(options.failTransition, u.castedAttr($form, 'up-fail-transition'), 'none')
