@@ -221,8 +221,8 @@ up.flow = (($) ->
         up.browser.loadPage(url, u.only(options, 'method', 'data'))
       return u.unresolvablePromise()
 
-    target = bestExistingSelector([selectorOrElement, options.fallback, config.fallbacks], options.origin, 'target')
-    failTarget = bestExistingSelector([options.failTarget, options.failFallback, config.failFallbacks], options.origin, 'failure target')
+    target = bestExistingSelector(selectorOrElement, u.merge(options, humanized: 'target'))
+    failTarget = bestExistingSelector(options.failTarget, u.merge(options, humanized: 'failure target')
 
     request =
       url: url
@@ -237,15 +237,11 @@ up.flow = (($) ->
     options.inspectResponse = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
 
     promise = up.ajax(request)
-
     onSuccess = (html, textStatus, xhr) ->
       processResponse(true, target, url, request, xhr, options)
-
     onFailure = (xhr, textStatus, errorThrown) ->
       processResponse(false, failTarget, url, request, xhr, options)
-
     promise = promise.then(onSuccess, onFailure)
-
     promise
 
   ###*
@@ -295,30 +291,14 @@ up.flow = (($) ->
     else
       extract(selector, xhr.responseText, options)
 
-  bestExistingSelector = (candidates, origin, humanized) ->
-    candidates = u.flatten(candidates)
-    candidates = u.compact(candidates) # options.failTarget might be undefined
-    candidates = u.uniq(candidates) # somebody might include 'body' twice
-
-    for candidate in candidates
-      resolved = resolveSelector(candidate, origin)
-      if $(resolved).length
-        return resolved
-      else
-        up.warn('Could not find %s in current page', candidate)
-
-    # If we haven't returned from the function at this point,
-    # no selector candidate exists in the current page
-    up.fail('Could not find %s in current page (tried %o)', humanized, candidates)
-
   bestImplantSteps = (selectorCandidates, response, options) ->
     success = false
     anyOldMatch = false
     anyNewMatch = false
-    for selectorCandidate in selectorCandidates
+    for selectorCandidate in u.simplifyArray(selectorCandidates)
       implantSteps = parseImplantSteps(selectorCandidate, response, options)
-      oldMatch = implantSteps.all (step) -> step.$old
-      newMatch = implantSteps.all (step) -> step.$new
+      oldMatch = u.all implantSteps, (step) -> step.$old
+      newMatch = u.all implantSteps, (step) -> step.$new
       anyOldMatch ||= oldMatch
       anyNewMatch ||= newMatch
       success = oldMatch && newMatch
@@ -386,12 +366,11 @@ up.flow = (($) ->
   ###
   extract = (selectorOrElement, html, options) ->
     up.log.group 'Extracting %s from %d bytes of HTML', selectorOrElement, html?.length, ->
-      options = u.options(options,
+      options = u.options options,
         historyMethod: 'push'
         requireMatch: true
         keep: true
         layer: 'auto'
-      )
 
       up.layout.saveScroll() unless options.saveScroll == false
 
@@ -400,18 +379,6 @@ up.flow = (($) ->
       promise = promise.then -> doSwap(selectorOrElement, html, options)
       promise = promise.then(options.afterSwap) if options.afterSwap
       promise
-
-  findOldFragment = (selector, options) ->
-    first(selector, options) || oldFragmentNotFound(selector, options)
-
-  oldFragmentNotFound = (selector, options) ->
-    if options.requireMatch
-      layerProse = options.layer
-      layerProse = 'page, modal or popup' if layerProse == 'auto'
-      message = "Could not find selector %s in the current #{layerProse}"
-      if message[0] == '#'
-        message += ' (avoid using IDs)'
-      up.fail(message, selector)
 
   doSwap = (selectorOrElement, html, options) ->
     response = parseResponse(html, options)
@@ -429,6 +396,20 @@ up.flow = (($) ->
         options.reveal = false # only reveal the first selector atom in the union
     # Delay all further links in the promise chain until all fragments have been swapped
     return $.when(swapPromises...)
+
+  bestExistingSelector = (selector, options) ->
+    candidates = u.simplifyArray [selector, options.failTarget, config.fallbacks]
+    for candidate in candidates
+      return selector if exists(candidate, options)
+    # If we haven't returned from the function at this point,
+    # no selector candidate exists in the current page
+    fragmentNotFound(candidates, options)
+
+  oldFragmentNotFound = (selectors, options) ->
+    options = u.options(options, humanized: 'selector' layer: 'auto')
+    layerProse = options.layer
+    layerProse = 'auto' if layerProse == 'page, modal or popup'
+    up.fail("Could not find #{options.humanized} in the current #{layerProse} (tried %o)", selectors)
 
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)
@@ -459,10 +440,8 @@ up.flow = (($) ->
 
   updateHistory = (options) ->
     options = u.options(options, historyMethod: 'push')
-    if options.history
-      up.history[options.historyMethod](options.history)
-    if options.title
-      document.title = options.title
+    up.history[options.historyMethod](options.history) if options.history
+    document.title = options.title if options.title
 
   swapElements = ($old, $new, pseudoClass, transition, options) ->
     transition ||= 'none'
@@ -791,7 +770,7 @@ up.flow = (($) ->
   @param {String} options.layer
     The name of the layer in which to find the element. Valid values are
     `auto`, `page`, `modal` and `popup`.
-  @param {}
+  @param {String|Element|jQuery} [options.origin]
   @return {jQuery|Undefined}
     The first element that is neither a ghost or being destroyed,
     or `undefined` if no such element was given.
@@ -799,10 +778,14 @@ up.flow = (($) ->
   ###
   first = (selectorOrElement, options) ->
     options = u.options(options, layer: 'auto')
+    resolved = resolveSelector(selectorOrElement, options.origin)
     if options.layer == 'auto'
-      firstInPriority(selectorOrElement, options.origin)
+      firstInPriority(resolved, options.origin)
     else
-      firstInLayer(selectorOrElement, options.layer)
+      firstInLayer(resolved, options.layer)
+
+  exists = (selectorOrElement, options) ->
+    !!first(selectorOrElement, options)
 
   firstInPriority = (selectorOrElement, origin) ->
     layers = ['popup', 'modal', 'page']
@@ -966,6 +949,7 @@ up.flow = (($) ->
   destroy: destroy
   extract: extract
   first: first
+  exists: exists
   source: source
   resolveSelector: resolveSelector
   hello: hello

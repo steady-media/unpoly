@@ -1944,6 +1944,19 @@ up.util = (($) ->
         flattened.push(object)
     flattened
 
+  ###*
+  Flattens the given array, removes missing elements
+  and removes duplicate elements.
+
+  @function up.util.simplifyArray
+  @internal
+  ###
+  simplifyArray = (array) ->
+    array = flatten(array)
+    array = compact(array)
+    array = uniq(array)
+    array
+
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -2060,6 +2073,7 @@ up.util = (($) ->
   horizontalScreenHalf: horizontalScreenHalf
   detachWith: detachWith
   flatten: flatten
+  simplifyArray: simplifyArray
 
 )($)
 

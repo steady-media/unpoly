@@ -674,3 +674,12 @@ describe 'up.util', ->
           { name: 'my=key', value: 'my=value' },
         ])
 
+  describe 'up.util.flatten', ->
+
+    it 'flattens the given array', ->
+      array = [1, [2, 3], 4]
+      expect(u.flatten(array)).toEqual([1, 2, 3, 4])
+
+    it 'only flattens one level deep for performance reasons', ->
+      array = [1, [2, [3,4]], 5]
+      expect(u.flatten(array)).toEqual([1, 2, [3, 4], 5])
