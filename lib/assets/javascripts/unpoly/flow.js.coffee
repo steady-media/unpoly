@@ -213,16 +213,19 @@ up.flow = (($) ->
   @stable
   ###
   replace = (selectorOrElement, url, options) ->
-    up.puts "Replacing %s from %s (%o)", selectorOrElement, url, options
     options = u.options(options)
+    up.puts "Replacing %s from %s (%o)", selectorOrElement, url, options
 
     if !up.browser.canPushState() && options.history != false
       unless options.preload
         up.browser.loadPage(url, u.only(options, 'method', 'data'))
       return u.unresolvablePromise()
 
-    target = bestExistingSelector(selectorOrElement, u.merge(options, humanized: 'target'))
-    failTarget = bestExistingSelector(options.failTarget, u.merge(options, humanized: 'failure target')
+    target = bestOldSelector(selectorOrElement, u.merge(options, humanized: 'target'))
+    failTarget = bestOldSelector(options.failTarget, u.merge(options, humanized: 'failure target'))
+
+    console.debug("Best target is %o", target)
+    console.debug("Best failTarget is %o", failTarget)
 
     request =
       url: url
@@ -291,38 +294,6 @@ up.flow = (($) ->
     else
       extract(selector, xhr.responseText, options)
 
-  bestImplantSteps = (selectorCandidates, response, options) ->
-    success = false
-    anyOldMatch = false
-    anyNewMatch = false
-    for selectorCandidate in u.simplifyArray(selectorCandidates)
-      implantSteps = parseImplantSteps(selectorCandidate, response, options)
-      oldMatch = u.all implantSteps, (step) -> step.$old
-      newMatch = u.all implantSteps, (step) -> step.$new
-      anyOldMatch ||= oldMatch
-      anyNewMatch ||= newMatch
-      success = oldMatch && newMatch
-      if success
-        if selector != selectorCandidate
-          selector = selectorCandidate
-          options.transition = config.fallbackTransition
-        break
-
-    unless success
-      if anyOldMatch && anyNewMatch
-        message = "Could not match targets in current page and response"
-      else if anyOldMatch && !anyNewMatch
-        message = "Could not find target in response"
-      else if !anyOldMatch && anyNewMatch
-        message = "Could not find target in current page"
-      else
-        message = "Target missing from both current page and response"
-
-      inspectAction = { label: 'Open response', callback: options.inspectResponse }
-      up.fail(["#{message} (tried %o)", selectorCandidates], action: inspectAction)
-
-    implantSteps
-
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))
 
@@ -382,7 +353,7 @@ up.flow = (($) ->
 
   doSwap = (selectorOrElement, html, options) ->
     response = parseResponse(html, options)
-    implantSteps = bestImplantSteps([selectorOrElement, options.fallback, config.fallbacks], response, options)
+    implantSteps = bestMatchingSteps([selectorOrElement, options.fallback, config.fallbacks], response, options)
 
     options.title = response.title() if shouldExtractTitle(options)
     updateHistory(options)
@@ -397,19 +368,16 @@ up.flow = (($) ->
     # Delay all further links in the promise chain until all fragments have been swapped
     return $.when(swapPromises...)
 
-  bestExistingSelector = (selector, options) ->
-    candidates = u.simplifyArray [selector, options.failTarget, config.fallbacks]
-    for candidate in candidates
-      return selector if exists(candidate, options)
-    # If we haven't returned from the function at this point,
-    # no selector candidate exists in the current page
-    fragmentNotFound(candidates, options)
+  bestOldSelector = (selector, options) ->
+    candidates = [selector, options.fallback, config.fallbacks]
+    cascade = new up.flow.ExtractCascade(candidates, options)
+    cascade.bestOldSelector()
 
-  oldFragmentNotFound = (selectors, options) ->
-    options = u.options(options, humanized: 'selector' layer: 'auto')
-    layerProse = options.layer
-    layerProse = 'auto' if layerProse == 'page, modal or popup'
-    up.fail("Could not find #{options.humanized} in the current #{layerProse} (tried %o)", selectors)
+  bestMatchingSteps = (selector, response, options) ->
+    candidates = [selector, options.fallback, config.fallbacks]
+    options = u.merge(options, response: response)
+    cascade = new up.flow.ExtractCascade(candidates, options)
+    cascade.bestMatchingSteps()
 
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)
@@ -434,9 +402,6 @@ up.flow = (($) ->
       # It returns an array of DOM elements, NOT a jQuery collection.
       if child = $.find(selector, htmlElement)[0]
         $(child)
-      else if options.requireMatch
-        inspectAction = { label: 'Open response', callback: options.inspectResponse }
-        up.fail(["Could not find selector %s in response %o", selector, html], action: inspectAction)
 
   updateHistory = (options) ->
     options = u.options(options, historyMethod: 'push')
@@ -649,37 +614,6 @@ up.flow = (($) ->
     parsed as a JSON object.
   @stable
   ###
-
-  parseImplantSteps = (selectorOrElement, response, options) ->
-    selector = resolveSelector(selectorOrElement, options.origin)
-    transitionArg = options.transition || options.animation || 'none'
-    comma = /\ *,\ */
-    disjunction = selector.split(comma)
-    if u.isString(transitions)
-      transitions = transitionArg.split(comma)
-    else
-      transitions = [transitionArg]
-    for selectorAtom, i in disjunction
-      # Splitting the atom
-      selectorParts = selectorAtom.match(/^(.+?)(?:\:(before|after))?$/)
-      selectorParts or up.fail('Could not parse selector atom "%s"', selectorAtom)
-      selector = selectorParts[1]
-      if selector == 'html'
-        # If someone really asked us to replace the <html> root, the best
-        # we can do is replace the <body>.
-        selector = 'body'
-
-      pseudoClass = selectorParts[2]
-      transition = transitions[i] || u.last(transitions)
-
-      $old = findOldFragment(selector, options)
-      $new = response.first(selector)
-
-      selector: selector
-      $old: $old
-      $new: $new
-      pseudoClass: pseudoClass
-      transition: transition
 
   ###*
   Compiles a page fragment that has been inserted into the DOM

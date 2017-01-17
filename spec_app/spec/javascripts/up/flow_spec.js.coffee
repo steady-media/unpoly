@@ -128,10 +128,10 @@ describe 'up.flow', ->
         describe 'if the server responds with a non-200 status code', ->
 
           it 'replaces the <body> instead of the given selector', ->
-            implantSpy = up.flow.knife.mock('extract') # can't have the example replace the Jasmine test runner UI
+            extractSpy = up.flow.knife.mock('extract') # can't have the example replace the Jasmine test runner UI
             up.replace('.middle', '/path')
             @respond(status: 500)
-            expect(implantSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
+            expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
 
           it 'uses a target selector given as { failTarget } option', ->
             up.replace('.middle', '/path', failTarget: '.after')
@@ -362,21 +362,35 @@ describe 'up.flow', ->
 
           describe 'when selectors are missing on the page before the request was made', ->
 
-            it 'tries selectors from options.fallbackTargets before making a request'
+            it 'tries selectors from options.fallbackTargets before making a request', ->
+              throw 'implement me'
 
-            it 'returns a rejected promise if all alternatives are exhausted'
+            it 'returns a rejected promise if all alternatives are exhausted', ->
+              throw 'implement me'
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing'
 
           describe 'when selectors are missing on the page after the request was made', ->
 
-            it 'tries selectors from options.fallbackTargets before swapping elements'
+            it 'tries selectors from options.fallbackTargets before swapping elements', ->
+              throw 'implement me'
 
-            it 'returns a rejected promise if all alternatives are exhausted'
+            it 'returns a rejected promise if all alternatives are exhausted', ->
+              throw 'implement me'
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
+              throw 'implement me'
 
           describe 'when selectors are missing in the response', ->
 
-            it 'tries selectors from options.fallbackTargets before swapping elements'
+            it 'tries selectors from options.fallbackTargets before swapping elements', ->
+              throw 'implement me'
 
-            it 'returns a rejected promise if all alternatives are exhausted'
+            it 'returns a rejected promise if all alternatives are exhausted', ->
+              throw 'implement me'
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
+              throw 'implement me'
 
         describe 'execution of script tags', ->
 
