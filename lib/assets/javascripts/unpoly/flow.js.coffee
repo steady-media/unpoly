@@ -353,7 +353,7 @@ up.flow = (($) ->
 
   doSwap = (selectorOrElement, html, options) ->
     response = parseResponse(html, options)
-    implantSteps = bestMatchingSteps([selectorOrElement, options.fallback, config.fallbacks], response, options)
+    implantSteps = bestMatchingSteps(selectorOrElement, response, options)
 
     options.title = response.title() if shouldExtractTitle(options)
     updateHistory(options)

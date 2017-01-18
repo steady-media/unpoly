@@ -5,7 +5,7 @@ class up.flow.ExtractPlan
   constructor: (selector, options) ->
     @selector = selector
     @origin = options.origin
-    @transition = @options.transition || @options.animation || 'none'
+    @transition = options.transition || options.animation || 'none'
     @response = options.response
     @steps = @parseSteps()
 
@@ -14,8 +14,8 @@ class up.flow.ExtractPlan
       step.$old = up.flow.first(step.selector, @options)
 
   findNew: =>
-    u.each @steps, (step) ->
-      step.$new = @response.find(step)
+    u.each @steps, (step) =>
+      step.$new = @response.first(step)
 
   oldExists: =>
     @findOld()
@@ -39,7 +39,8 @@ class up.flow.ExtractPlan
       ]
   ###
   parseSteps: =>
-    resolvedSelector = up.flow(resolveSelector(@selector, @origin))
+    console.debug("Resolving selector %o", @selector)
+    resolvedSelector = up.flow.resolveSelector(@selector, @origin)
     if u.isString(@transition)
       transitions = @transition.split(comma)
     else
