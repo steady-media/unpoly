@@ -443,10 +443,30 @@ describe 'up.link', ->
         describe 'wih a CSS selector in the [up-fallback] attribute', ->
 
           it 'uses the fallback selector if the [up-target] CSS does not exist on the page', ->
-            throw "implement me"
+            affix('.fallback').text('old fallback')
+            $link = affix('a[href="/path"][up-target=".target"][up-fallback=".fallback"]')
+            Trigger.clickSequence($link)
+            u.nextFrame ->
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="fallback">new fallback</div>
+              """
+              u.nextFrame ->
+                expect('.target').toHaveText('new fallback')
 
           it 'ignores the fallback selector if the [up-target] CSS exists on the page', ->
-            throw "implement me"
+            affix('.target').text('old target')
+            affix('.fallback').text('old fallback')
+            $link = affix('a[href="/path"][up-target=".target"][up-fallback=".fallback"]')
+            Trigger.clickSequence($link)
+            u.nextFrame ->
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="fallback">new fallback</div>
+              """
+              u.nextFrame ->
+                expect('.target').toHaveText('new target')
+                expect('.fallback').toHaveText('old fallback')
 
       it 'does not add a history entry when an up-history attribute is set to "false"', ->
         oldPathname = location.pathname
