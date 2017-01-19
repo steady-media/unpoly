@@ -112,10 +112,11 @@ describe 'up.modal', ->
             openPromise.then ->
               expect($modal.css('overflow-y')).not.toEqual('scroll')
               expect($viewport.css('overflow-y')).toEqual('scroll')
-              closePromise = up.modal.close(animation: 'fade-out', duration: 100)
-              expect($modal.css('overflow-y')).toEqual('scroll')
-              expect($viewport.css('overflow-y')).toEqual('hidden')
-              done()
+              closePromise = up.modal.close(animation: 'fade-out', duration: 200)
+              u.nextFrame ->
+                expect($modal.css('overflow-y')).toEqual('scroll')
+                expect($viewport.css('overflow-y')).toEqual('hidden')
+                done()
 
         it 'does not add right padding to the body if the body has overflow-y: hidden', (done) ->
           restoreBody = u.temporaryCss($('body'), 'overflow-y': 'hidden')
