@@ -5,7 +5,7 @@ class up.flow.ExtractCascade
   constructor: (candidates, options) ->
     console.debug("Candidates before: %o", candidates)
     @options = u.options(options, humanized: 'selector', layer: 'auto')
-    @candidates = u.simplifyArray(candidates)
+    @candidates = candidates
     console.debug("ExtractCascade with candidates %o (%o)", @candidates, options)
     @plans = u.map @candidates, (candidate, i) =>
       planOptions = u.copy(@options)

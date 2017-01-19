@@ -369,14 +369,8 @@ up.flow = (($) ->
   bestOldSelector = (selector, options) ->
     console.debug("bestOldSelector for %o / %o", selector, options)
     candidates = targetCandidates(selector, options)
-    # up.modal and up.popup provide a function that creates a matching frame before swapping.
-    # In this case, don't fallback before a new request, we would probably just get <body>
-    unless options.provideTarget
-      cascade = new up.flow.ExtractCascade(candidates, options)
-      selector = cascade.bestOldSelector()
-    else
-      # We still need to find some selector in case we're asked for an undefined options.fallback
-      selector = candidates[0]
+    cascade = new up.flow.ExtractCascade(candidates, options)
+    selector = cascade.bestOldSelector()
     resolveSelector(selector, options.origin)
 
   bestMatchingSteps = (selector, response, options) ->
@@ -386,10 +380,16 @@ up.flow = (($) ->
     cascade.bestMatchingSteps()
 
   targetCandidates = (selector, options) ->
-    if options.fallback == false
-      [selector]
-    else
-      u.simplifyArray [selector, options.fallback, config.fallbacks]
+    candidates = [selector, options.fallback, config.fallbacks]
+    candidates = u.flatten(candidates)
+    # Remove undefined, null and false
+    candidates = u.select candidates, u.isTruthy
+
+    if options.fallback == false || options.provideTarget
+      # Use the first defined candidate, but not `selector` since that
+      # might be an undefined options.failTarget
+      candidates = [candidates[0]]
+    candidates
 
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)

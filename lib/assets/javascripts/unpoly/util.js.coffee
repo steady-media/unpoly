@@ -1248,6 +1248,15 @@ up.util = (($) ->
     isPromise(promise) && promise.state?() == 'resolved'
 
   ###*
+  Returns whether the given argument is a resolved jQuery promise.
+
+  @return {Boolean}
+  @internal
+  ###
+  isResolvedPromise = (promise) ->
+    isPromise(promise) && promise.state?() == 'resolved'
+
+  ###*
   Returns a [Deferred object](https://api.jquery.com/category/deferred-object/) that will never be resolved.
 
   @function up.util.unresolvableDeferred
@@ -1950,18 +1959,21 @@ up.util = (($) ->
         flattened.push(object)
     flattened
 
-  ###*
-  Flattens the given array, removes missing elements
-  and removes duplicate elements.
+  isTruthy = (object) ->
+    !!object
 
-  @function up.util.simplifyArray
-  @internal
-  ###
-  simplifyArray = (array) ->
-    array = flatten(array)
-    array = compact(array)
-    array = uniq(array)
-    array
+#  ###*
+#  Flattens the given array, removes missing elements
+#  and removes duplicate elements.
+#
+#  @function up.util.simplifyArray
+#  @internal
+#  ###
+#  simplifyArray = (array) ->
+#    array = flatten(array)
+#    array = compact(array)
+#    array = uniq(array)
+#    array
 
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
@@ -2079,7 +2091,8 @@ up.util = (($) ->
   horizontalScreenHalf: horizontalScreenHalf
   detachWith: detachWith
   flatten: flatten
-  simplifyArray: simplifyArray
+  isTruthy: isTruthy
+  # simplifyArray: simplifyArray
 
 )($)
 

@@ -362,45 +362,170 @@ describe 'up.flow', ->
 
           describe 'when selectors are missing on the page before the request was made', ->
 
-            it 'tries selectors from options.fallback before making a request', ->
-              throw 'implement me'
+            beforeEach ->
+              up.flow.config.fallbacks = []
 
-            it 'returns a rejected promise if all alternatives are exhausted', ->
-              throw 'implement me'
+            it 'tries selectors from options.fallback before making a request', ->
+              affix('.box').text('old box')
+              up.replace('.unknown', '/path', fallback: '.box')
+              @respondWith '<div class="box">new box</div>'
+              expect('.box').toHaveText('new box')
+
+            it 'throws an error if all alternatives are exhausted', ->
+              replacement = -> up.replace('.unknown', '/path', fallback: '.more-unknown')
+              expect(replacement).toThrowError(/Could not find target in current page/i)
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
-              throw 'implement me'
+              affix('.target').text('old target')
+              affix('.fallback').text('old fallback')
+              up.replace('.target, .unknown', '/path', fallback: '.fallback')
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="fallback">new fallback</div>
+              """
+              expect('.target').toHaveText('old target')
+              expect('.fallback').toHaveText('new fallback')
 
-            it 'does not try a fallback selector of options.fallback is false', ->
-              throw 'implement me'
+            it 'tries a selector from up.flow.config.fallbacks if options.fallback is missing', ->
+              up.flow.config.fallbacks = ['.existing']
+              affix('.existing').text('old existing')
+              up.replace('.unknown', '/path')
+              @respondWith '<div class="existing">new existing</div>'
+              expect('.existing').toHaveText('new existing')
+
+            it 'does not try a selector from up.flow.config.fallbacks if options.fallback is false', ->
+              up.flow.config.fallbacks = ['.existing']
+              affix('.existing').text('old existing')
+              replacement = -> up.replace('.unknown', '/path', fallback: false)
+              expect(replacement).toThrowError(/Could not find target in current page/i)
 
           describe 'when selectors are missing on the page after the request was made', ->
 
-            it 'tries selectors from options.fallback before swapping elements', ->
-              throw 'implement me'
+            beforeEach ->
+              up.flow.config.fallbacks = []
 
-            it 'returns a rejected promise if all alternatives are exhausted', ->
-              throw 'implement me'
+            it 'tries selectors from options.fallback before swapping elements', ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: '.fallback')
+              $target.remove()
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="fallback">new fallback</div>
+              """
+              expect('.fallback').toHaveText('new fallback')
+
+            it 'throws an error if all alternatives are exhausted', ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: '.fallback')
+              $target.remove()
+              $fallback.remove()
+              respond = =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+              expect(respond).toThrowError(/Could not find selector in current page/i)
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
-              throw 'implement me'
+              $target = affix('.target').text('old target')
+              $target2 = affix('.target2').text('old target2')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target, .target2', '/path', fallback: '.fallback')
+              $target2.remove()
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="target2">new target2</div>
+                <div class="fallback">new fallback</div>
+              """
+              expect('.target').toHaveText('old target')
+              expect('.fallback').toHaveText('new fallback')
 
-            it 'does not try a fallback selector of options.fallback is false', ->
-              throw 'implement me'
+            it 'tries a selector from up.flow.config.fallbacks if options.fallback is missing', ->
+              up.flow.config.fallbacks = ['.fallback']
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path')
+              $target.remove()
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="fallback">new fallback</div>
+              """
+              expect('.fallback').toHaveText('new fallback')
+
+            it 'does not try a selector from up.flow.config.fallbacks if options.fallback is false', ->
+              up.flow.config.fallbacks = ['.fallback']
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: false)
+              $target.remove()
+              respond = =>
+                @respondWith """
+                  <div class="target">new target</div>
+                  <div class="fallback">new fallback</div>
+                """
+              expect(respond).toThrowError(/Could not find selector in current page/i)
 
           describe 'when selectors are missing in the response', ->
 
-            it 'tries selectors from options.fallback before swapping elements', ->
-              throw 'implement me'
+            beforeEach ->
+              up.flow.config.fallbacks = []
 
-            it 'returns a rejected promise if all alternatives are exhausted', ->
-              throw 'implement me'
+            it 'tries selectors from options.fallback before swapping elements', ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: '.fallback')
+              @respondWith """
+                <div class="fallback">new fallback</div>
+              """
+              expect('.target').toHaveText('old target')
+              expect('.fallback').toHaveText('new fallback')
+
+            it 'throws an error if all alternatives are exhausted', ->
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: '.fallback')
+              respond = =>
+                @respondWith """
+                  <div class="unexpected">new unexpected</div>
+                """
+              expect(respond).toThrowError(/Could not find selector in response/i)
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
-              throw 'implement me'
+              $target = affix('.target').text('old target')
+              $target2 = affix('.target2').text('old target2')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target, .target2', '/path', fallback: '.fallback')
+              @respondWith """
+                <div class="target">new target</div>
+                <div class="fallback">new fallback</div>
+              """
+              expect('.target').toHaveText('old target')
+              expect('.target2').toHaveText('old target2')
+              expect('.fallback').toHaveText('new fallback')
 
-            it 'does not try a fallback selector of options.fallback is false', ->
-              throw 'implement me'
+            it 'tries a selector from up.flow.config.fallbacks if options.fallback is missing', ->
+              up.flow.config.fallbacks = ['.fallback']
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path')
+              @respondWith """
+                <div class="fallback">new fallback</div>
+              """
+              expect('.target').toHaveText('old target')
+              expect('.fallback').toHaveText('new fallback')
+
+            it 'does not try a selector from up.flow.config.fallbacks if options.fallback is false', ->
+              up.flow.config.fallbacks = ['.fallback']
+              $target = affix('.target').text('old target')
+              $fallback = affix('.fallback').text('old fallback')
+              up.replace('.target', '/path', fallback: false)
+              respond = =>
+                @respondWith """
+                  <div class="fallback">new fallback</div>
+                """
+              expect(respond).toThrowError(/Could not find selector in response/i)
 
         describe 'execution of script tags', ->
 
