@@ -8,6 +8,8 @@ class up.flow.ExtractCascade
     @plans = u.map @candidates, (candidate, i) =>
       planOptions = u.copy(@options)
       if i > 0
+        # If we're using a fallback (any candidate that's not the first),
+        # the original transition might no longer be appropriate.
         planOptions.transition = up.flow.config.fallbackTransition
       new up.flow.ExtractPlan(candidate, planOptions)
 

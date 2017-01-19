@@ -10,11 +10,24 @@ Unreleased
 
 ### Compatible changes
 
+- FALLBACKS
+  options.fallback for up.replace, up.extract, up.follow, up.submit, up.visit, up.modal.replace, up.modal.visit.
+  [up-fallback] for a[up-target], a[up-follow], form[up-target]
+  up.flow.config.fallbacks, up.flow.config.fallbackTransition
+
+
 - Improve performance when updating fragments without transitions
 - When updating the `body` element with a transition, that transition is now silently ignored instead of throwing an error.
 
 
 ### Breaking changes
+
+- [`up.replace`](/up.replace) now returns a rejected promise if the server returns a non-200 status code.
+- `up.util.merge` has been replaced by [`up.util.assign`](/up.util.assign). This behaves like
+  [`Object.assign`](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign).
+- [`up.util.resolvedPromise`](/up.util.resolvedPromise) not accepts arguments which will become the resolution values.
+- [`up.util.resolvedDeferred`](/up.util.resolvedDeferred) not accepts arguments which will become the resolution values.
+- New utility method [`up.util.rejectedPromise`](/up.util.rejectedPromise).
 
 
 0.32.0

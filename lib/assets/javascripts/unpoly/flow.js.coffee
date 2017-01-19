@@ -23,6 +23,10 @@ up.flow = (($) ->
   @param {Boolean} [options.runLinkedScripts=false]
     Whether `<script src='...'>` tags inside inserted HTML fragments will fetch and execute
     the linked JavaScript file.
+  @param {String} [options.fallbacks=['body']]
+    The selector to replace when the original target was not found in the page.
+  @param {String} [options.fallbackTransition='none']
+    The transition to use when using a fallback target.
   @stable
   ###
   config = u.config
@@ -159,6 +163,8 @@ up.flow = (($) ->
     The URL to fetch from the server.
   @param {String} [options.failTarget='body']
     The CSS selector to update if the server sends a non-200 status code.
+  @param {String} [options.fallback]
+    The selector to update when the original target was not found in the page.
   @param {String} [options.title]
     The document title after the replacement.
 
@@ -208,6 +214,7 @@ up.flow = (($) ->
     same layer as the element that triggered the replacement (see `options.origin`).
     If that element is not known, or no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
+
   @return {Promise}
     A promise that will be resolved when the page has been updated.
   @stable
@@ -719,9 +726,6 @@ up.flow = (($) ->
     else
       firstInLayer(resolved, options.layer)
 
-  exists = (selectorOrElement, options) ->
-    !!first(selectorOrElement, options)
-
   firstInPriority = (selectorOrElement, origin) ->
     layers = ['popup', 'modal', 'page']
     $match = undefined
@@ -884,7 +888,6 @@ up.flow = (($) ->
   destroy: destroy
   extract: extract
   first: first
-  exists: exists
   source: source
   resolveSelector: resolveSelector
   hello: hello

@@ -1983,19 +1983,6 @@ up.util = (($) ->
   isTruthy = (object) ->
     !!object
 
-#  ###*
-#  Flattens the given array, removes missing elements
-#  and removes duplicate elements.
-#
-#  @function up.util.simplifyArray
-#  @internal
-#  ###
-#  simplifyArray = (array) ->
-#    array = flatten(array)
-#    array = compact(array)
-#    array = uniq(array)
-#    array
-
   isDetached: isDetached
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
@@ -2068,8 +2055,6 @@ up.util = (($) ->
   findWithSelf: findWithSelf
   contains: contains
   toArray: toArray
-#  castsToTrue: castsToTrue
-#  castsToFalse: castsToFalse
   castedAttr: castedAttr
   locationFromXhr: locationFromXhr
   titleFromXhr: titleFromXhr
@@ -2114,7 +2099,6 @@ up.util = (($) ->
   detachWith: detachWith
   flatten: flatten
   isTruthy: isTruthy
-  # simplifyArray: simplifyArray
 
 )($)
 
