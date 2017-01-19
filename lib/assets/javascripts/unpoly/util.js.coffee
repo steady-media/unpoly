@@ -240,14 +240,17 @@ up.util = (($) ->
       createElement('div', html)
 
   ###*
-  Merge the contents of two or more objects together into the first object.
+  Merge the own properties of one or more `sources` into the `target` object.
 
-  @function up.util.extend
+  @function up.util.assign
   @param {Object} target
   @param {Array<Object>} sources...
   @stable
   ###
-  extend = $.extend
+  assign = Object.assign || (target, sources...) ->
+    for source in sources
+      for own key, value of target
+        source[key] = value
 
   ###*
   Returns a new string with whitespace removed from the beginning
@@ -569,7 +572,7 @@ up.util = (($) ->
     if isArray(object)
       object.slice()
     else if isHash(object)
-      extend({}, object)
+      assign({}, object)
 
   ###*
   If given a jQuery collection, returns the underlying array of DOM element.
@@ -594,7 +597,7 @@ up.util = (($) ->
   @stable
   ###
   merge = (sources...) ->
-    extend({}, sources...)
+    assign({}, sources...)
 
   ###*
   Creates an options hash from the given argument and some defaults.
@@ -1220,23 +1223,41 @@ up.util = (($) ->
   already resolved.
 
   @function up.util.resolvedDeferred
+  @param {Array<Object>} [args...]
+    The resolution values that will be passed to callbacks
   @return {Deferred}
   @stable
   ###
-  resolvedDeferred = ->
+  resolvedDeferred = (args...) ->
     deferred = $.Deferred()
-    deferred.resolve()
+    deferred.resolve(args...)
     deferred
 
   ###*
   Returns a promise that is already resolved.
 
   @function up.util.resolvedPromise
+  @param {Array<Object>} [args...]
+    The resolution values that will be passed to callbacks
   @return {Promise}
   @stable
   ###
-  resolvedPromise = ->
-    resolvedDeferred().promise()
+  resolvedPromise = (args...) ->
+    resolvedDeferred(args...).promise()
+
+  ###*
+  Returns a promise that is already rejected.
+
+  @function up.util.rejectedPromise
+  @param {Array<Object>} [args...]
+    The rejection values that will be passed to callbacks
+  @return {Promise}
+  @stable
+  ###
+  rejectedPromise = (args...) ->
+    deferred = $.Deferred()
+    deferred.reject(args...)
+    deferred.promise()
 
   ###*
   Returns whether the given argument is a resolved jQuery promise.
@@ -1544,7 +1565,7 @@ up.util = (($) ->
     hash.reset = ->
       newOptions = blueprint
       newOptions = newOptions() if isFunction(newOptions)
-      extend(hash, newOptions)
+      assign(hash, newOptions)
     hash.reset()
     hash
 
@@ -1992,7 +2013,7 @@ up.util = (($) ->
   $createElementFromSelector: $createElementFromSelector
   $createPlaceholder: $createPlaceholder
   selectorForElement: selectorForElement
-  extend: extend
+  assign: assign
   copy: copy
   merge: merge
   options: options
@@ -2060,6 +2081,7 @@ up.util = (($) ->
   unresolvableDeferred: unresolvableDeferred
   unresolvablePromise: unresolvablePromise
   resolvedPromise: resolvedPromise
+  rejectedPromise: rejectedPromise
   resolvedDeferred: resolvedDeferred
   resolvableWhen: resolvableWhen
   setMissingAttrs: setMissingAttrs

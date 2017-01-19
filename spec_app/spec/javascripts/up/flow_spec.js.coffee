@@ -125,10 +125,11 @@ describe 'up.flow', ->
           up.replace('.middle', '/path', method: 'put')
           expect(@lastRequest()).toHaveRequestMethod('PUT')
 
-        describe 'if the server responds with a non-200 status code', ->
+        describe 'when the server responds with a non-200 status code', ->
 
           it 'replaces the <body> instead of the given selector', ->
-            extractSpy = up.flow.knife.mock('extract') # can't have the example replace the Jasmine test runner UI
+            # can't have the example replace the Jasmine test runner UI
+            extractSpy = up.flow.knife.mock('extract').and.returnValue(u.resolvedPromise())
             up.replace('.middle', '/path')
             @respond(status: 500)
             expect(extractSpy).toHaveBeenCalledWith('body', jasmine.any(String), jasmine.any(Object))
@@ -138,6 +139,13 @@ describe 'up.flow', ->
             @respond(status: 500)
             expect($('.middle')).toHaveText('old-middle')
             expect($('.after')).toHaveText('new-after')
+
+          it 'rejects the returned promise', ->
+            affix('.after')
+            promise = up.replace('.middle', '/path', failTarget: '.after')
+            expect(promise.state()).toEqual('pending')
+            @respond(status: 500)
+            expect(promise.state()).toEqual('rejected')
 
         describe 'history', ->
 
@@ -426,7 +434,7 @@ describe 'up.flow', ->
                   <div class="target">new target</div>
                   <div class="fallback">new fallback</div>
                 """
-              expect(respond).toThrowError(/Could not find selector in current page/i)
+              expect(respond).toThrowError(/Could not find target in current page/i)
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
               $target = affix('.target').text('old target')
@@ -465,7 +473,7 @@ describe 'up.flow', ->
                   <div class="target">new target</div>
                   <div class="fallback">new fallback</div>
                 """
-              expect(respond).toThrowError(/Could not find selector in current page/i)
+              expect(respond).toThrowError(/Could not find target in current page/i)
 
           describe 'when selectors are missing in the response', ->
 
@@ -490,7 +498,7 @@ describe 'up.flow', ->
                 @respondWith """
                   <div class="unexpected">new unexpected</div>
                 """
-              expect(respond).toThrowError(/Could not find selector in response/i)
+              expect(respond).toThrowError(/Could not find target in response/i)
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
               $target = affix('.target').text('old target')
@@ -525,7 +533,7 @@ describe 'up.flow', ->
                 @respondWith """
                   <div class="fallback">new fallback</div>
                 """
-              expect(respond).toThrowError(/Could not find selector in response/i)
+              expect(respond).toThrowError(/Could not find target in response/i)
 
         describe 'execution of script tags', ->
 

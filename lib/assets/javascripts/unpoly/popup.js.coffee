@@ -311,7 +311,7 @@ up.popup = (($) ->
       title: state.coveredTitle
     )
     animateOptions = up.motion.animateOptions(options, duration: config.closeDuration, easing: config.closeEasing)
-    u.extend(options, animateOptions)
+    u.assign(options, animateOptions)
 
     up.bus.whenEmitted('up:popup:close', message: 'Closing popup', $element: state.$popup).then ->
       state.phase = 'closing'

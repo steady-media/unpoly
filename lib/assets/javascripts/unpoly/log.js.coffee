@@ -53,7 +53,7 @@ up.log = (($) ->
   ###*
   Prints a debugging message to the browser console.
 
-  @function up.debug
+  @function up.log.debug
   @param {String} message
   @param {Array} args...
   @internal

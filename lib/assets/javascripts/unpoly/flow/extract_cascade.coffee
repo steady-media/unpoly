@@ -10,7 +10,6 @@ class up.flow.ExtractCascade
       planOptions = u.copy(@options)
       if i > 0
         planOptions.transition = up.flow.config.fallbackTransition
-      console.debug("planOptions are %o", planOptions)
       new up.flow.ExtractPlan(candidate, planOptions)
 
   buildCandidates: (selector) ->

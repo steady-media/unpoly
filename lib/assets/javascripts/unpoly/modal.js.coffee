@@ -609,7 +609,7 @@ up.modal = (($) ->
 
   flavor = (name, overrideConfig = {}) ->
     up.log.warn 'The up.modal.flavor function is deprecated. Use the up.modal.flavors property instead.'
-    u.extend(flavorOverrides(name), overrideConfig)
+    u.assign(flavorOverrides(name), overrideConfig)
 
   ###*
   Returns a config object for the given flavor.

@@ -505,7 +505,7 @@ Unreleased
   cache after a non-idempotent request.
 - Loading modals and popups will now open if there is a fragment update between the modal/popup's
   request and response.
-- [`up.follow`](/up.follow) and [`up.replace`](/up.replace) now have an option `{ failTarget }`.
+- [`up.follow`](/up.follow) and [`up.replace`](/up.replace) now have an option `{ ^failTarget }`.
   Use it to define the selector to replace if the server responds with a non-200 status code.
 - [`[up-target]`](/a-up-target) and [`up-follow`](/a-up-follow) now have a modifying attribute `up-fail-target`.
   Use it to define the selector to replace if the server responds with a non-200 status code.

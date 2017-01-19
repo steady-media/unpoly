@@ -40,7 +40,6 @@ class up.flow.ExtractPlan
       ]
   ###
   parseSteps: =>
-    console.debug("Resolving selector %o", @selector)
     if u.isString(@transition)
       transitions = @transition.split(comma)
     else

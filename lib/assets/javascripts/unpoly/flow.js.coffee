@@ -62,7 +62,6 @@ up.flow = (($) ->
   @internal
   ###
   resolveSelector = (selectorOrElement, origin) ->
-    console.debug("Resolving selector %o", selectorOrElement)
     if u.isString(selectorOrElement)
       selector = selectorOrElement
       if u.contains(selector, '&')
@@ -231,6 +230,8 @@ up.flow = (($) ->
       humanizedTarget: 'failure target'
       provideTarget: undefined # don't provide a target if we're targeting the failTarget
 
+    console.debug('**** failureOptions are %o', failureOptions)
+
     target = bestPreflightSelector(selectorOrElement, successOptions)
     failTarget = bestPreflightSelector(options.failTarget, failureOptions)
 
@@ -248,10 +249,13 @@ up.flow = (($) ->
       headers: options.headers
 
     onSuccess = (html, textStatus, xhr) ->
-      processResponse(true, target, url, request, xhr, options)
+      processResponse(true, target, url, request, xhr, successOptions)
     onFailure = (xhr, textStatus, errorThrown) ->
-      options.provideTarget = undefined
-      processResponse(false, failTarget, url, request, xhr, options)
+      console.debug("************* on failure!")
+      rejection = -> u.rejectedPromise(xhr, textStatus, errorThrown)
+      promise = processResponse(false, failTarget, url, request, xhr, failureOptions)
+      console.debug('***** processResponse returned %o', promise)
+      promise.then(rejection, rejection)
 
     promise = up.ajax(request)
     promise = promise.then(onSuccess, onFailure)
@@ -299,10 +303,14 @@ up.flow = (($) ->
 
     options.title = u.titleFromXhr(xhr) if shouldExtractTitle(options)
 
+    console.debug("processResponse before extract")
+
     if options.preload
       u.resolvedPromise()
     else
-      extract(selector, xhr.responseText, options)
+      promise = extract(selector, xhr.responseText, options)
+      console.debug("extract returned %o", promise)
+      promise
 
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))
@@ -354,6 +362,8 @@ up.flow = (($) ->
         layer: 'auto'
 
       up.layout.saveScroll() unless options.saveScroll == false
+
+      console.debug('*********** provideTarget: %o', options.provideTarget)
 
       # Allow callers to create the targeted element right before we swap.
       options.provideTarget?()

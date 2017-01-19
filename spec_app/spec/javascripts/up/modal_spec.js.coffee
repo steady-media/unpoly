@@ -26,9 +26,6 @@ describe 'up.modal', ->
           expect($('.up-modal-dialog .after')).not.toExist()
           done()
 
-      it "doesn't create an .up-modal frame and replaces { failTarget } if the server returns a non-200 response", ->
-        throw "implement me"
-
     describe 'up.modal.extract', ->
 
       it 'opens a modal by extracting the given selector from the given HTML string', ->
@@ -49,6 +46,39 @@ describe 'up.modal', ->
         expect(location.href).toEqual(oldHref)
 
     describe 'up.modal.visit', ->
+
+      it "requests the given URL and places the given selector into a modal", ->
+        up.modal.visit '/foo', target: '.middle'
+
+        @respondWith """
+          <div class="before">new-before</div>
+          <div class="middle">new-middle</div>
+          <div class="after">new-after</div>
+        """
+
+        expect('.up-modal').toExist()
+        expect('.up-modal-dialog').toExist()
+        expect('.up-modal-dialog .middle').toExist()
+        expect('.up-modal-dialog .middle').toHaveText('new-middle')
+        expect('.up-modal-dialog .before').not.toExist()
+        expect('.up-modal-dialog .after').not.toExist()
+
+        expect(location.pathname).toEndWith('/foo')
+
+      it "doesn't create an .up-modal frame and replaces { failTarget } if the server returns a non-200 response", ->
+        affix('.error').text('old error')
+
+        up.modal.visit '/foo', target: '.target', failTarget: '.error'
+
+        @respondWith
+          status: 500
+          responseText: """
+            <div class="target">new target</div>
+            <div class="error">new error</div>
+          """
+
+        expect('.up-modal').not.toExist()
+        expect('.error').toHaveText('new error')
 
       describe 'preventing elements from jumping as scrollbars change', ->
 
