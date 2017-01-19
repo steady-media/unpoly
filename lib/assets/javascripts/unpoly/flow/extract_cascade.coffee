@@ -44,9 +44,9 @@ class up.flow.ExtractCascade
       @oldPlanNotFound()
     else
       if @oldPlan()
-        message = "Could not find #{@humanized} in response"
+        message = "Could not find #{@options.humanized} in response"
       else
-        message = "Could not match #{@humanized} in current page and response"
+        message = "Could not match #{@options.humanized} in current page and response"
       if @response && @options.inspectResponse
         inspectAction = { label: 'Open response', callback: @options.inspectResponse }
       up.fail(["#{message} (tried %o)", @candidates], action: inspectAction)

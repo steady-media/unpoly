@@ -656,12 +656,12 @@ describe 'up.flow', ->
       it "throws an error if the selector can't be found on the current page", ->
         html = '<div class="foo-bar">text</div>'
         extract = -> up.extract('.foo-bar', html)
-        expect(extract).toThrowError(/Could not find selector ".foo-bar"/i)
+        expect(extract).toThrowError(/Could not find selector in current page, modal or popup/i)
 
       it "throws an error if the selector can't be found in the given HTML string", ->
         affix('.foo-bar')
         extract = -> up.extract('.foo-bar', '')
-        expect(extract).toThrowError(/Could not find selector ".foo-bar" in response/i)
+        expect(extract).toThrowError(/Could not find selector in response/i)
 
       it "ignores an element that matches the selector but also matches .up-destroying", ->
         html = '<div class="foo-bar">text</div>'

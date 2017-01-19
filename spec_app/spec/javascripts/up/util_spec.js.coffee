@@ -683,3 +683,17 @@ describe 'up.util', ->
     it 'only flattens one level deep for performance reasons', ->
       array = [1, [2, [3,4]], 5]
       expect(u.flatten(array)).toEqual([1, 2, [3, 4], 5])
+
+  describe 'up.util.memoize', ->
+
+    it 'returns a function that calls the memoized function', ->
+      fun = (a, b) -> a + b
+      memoized = u.memoize(fun)
+      expect(memoized(2, 3)).toEqual(5)
+
+    it 'returns the cached return value of the first call when called again', ->
+      spy = jasmine.createSpy().and.returnValue(5)
+      memoized = u.memoize(spy)
+      expect(memoized(2, 3)).toEqual(5)
+      expect(memoized(2, 3)).toEqual(5)
+      expect(spy.calls.count()).toEqual(1)
