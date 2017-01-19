@@ -3,8 +3,8 @@ u = up.util
 class up.flow.ExtractPlan
 
   constructor: (selector, options) ->
-    @selector = selector
     @origin = options.origin
+    @selector = up.flow.resolveSelector(selector, options.origin)
     @transition = options.transition || options.animation || 'none'
     @response = options.response
     @steps = @parseSteps()
@@ -48,8 +48,7 @@ class up.flow.ExtractPlan
 
     comma = /\ *,\ */
 
-    resolvedSelector = up.flow.resolveSelector(@selector, @origin)
-    disjunction = resolvedSelector.split(comma)
+    disjunction = @selector.split(comma)
 
     u.map disjunction, (literal, i) ->
       literalParts = literal.match(/^(.+?)(?:\:(before|after))?$/)

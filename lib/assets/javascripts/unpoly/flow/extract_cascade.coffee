@@ -2,10 +2,9 @@ u = up.util
 
 class up.flow.ExtractCascade
 
-  constructor: (candidates, options) ->
-    console.debug("Candidates before: %o", candidates)
-    @options = u.options(options, humanized: 'selector', layer: 'auto')
-    @candidates = candidates
+  constructor: (selector, options) ->
+    @options = u.options(options, humanizedTarget: 'selector', layer: 'auto')
+    @candidates = @buildCandidates(selector)
     console.debug("ExtractCascade with candidates %o (%o)", @candidates, options)
     @plans = u.map @candidates, (candidate, i) =>
       planOptions = u.copy(@options)
@@ -13,6 +12,17 @@ class up.flow.ExtractCascade
         planOptions.transition = up.flow.config.fallbackTransition
       console.debug("planOptions are %o", planOptions)
       new up.flow.ExtractPlan(candidate, planOptions)
+
+  buildCandidates: (selector) ->
+    candidates = [selector, @options.fallback, up.flow.config.fallbacks]
+    candidates = u.flatten(candidates)
+    # Remove undefined, null and false
+    candidates = u.select candidates, u.isTruthy
+    if @options.fallback == false || @options.provideTarget
+      # Use the first defined candidate, but not `selector` since that
+      # might be an undefined options.failTarget
+      candidates = [candidates[0]]
+    candidates
 
   oldPlan: =>
     @detectPlan('oldExists')
@@ -27,7 +37,11 @@ class up.flow.ExtractCascade
     u.detect @plans, (plan) -> plan[checker]()
 
   bestOldSelector: =>
-    if plan = @oldPlan()
+    if @options.provideTarget
+      # We know that the target will be created before swapping,
+      # so just return the first plan
+      @plans[0].selector
+    else if plan = @oldPlan()
       plan.selector
     else
       @oldPlanNotFound()
@@ -44,9 +58,9 @@ class up.flow.ExtractCascade
       @oldPlanNotFound()
     else
       if @oldPlan()
-        message = "Could not find #{@options.humanized} in response"
+        message = "Could not find #{@options.humanizedTarget} in response"
       else
-        message = "Could not match #{@options.humanized} in current page and response"
+        message = "Could not match #{@options.humanizedTarget} in current page and response"
       if @response && @options.inspectResponse
         inspectAction = { label: 'Open response', callback: @options.inspectResponse }
       up.fail(["#{message} (tried %o)", @candidates], action: inspectAction)
@@ -54,5 +68,4 @@ class up.flow.ExtractCascade
   oldPlanNotFound: =>
     layerProse = @options.layer
     layerProse = 'page, modal or popup' if layerProse == 'auto'
-    up.fail("Could not find #{@options.humanized} in current #{layerProse} (tried %o)", @candidates)
-
+    up.fail("Could not find #{@options.humanizedTarget} in current #{layerProse} (tried %o)", @candidates)

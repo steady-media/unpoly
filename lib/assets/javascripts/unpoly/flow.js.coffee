@@ -222,8 +222,17 @@ up.flow = (($) ->
         up.browser.loadPage(url, u.only(options, 'method', 'data'))
       return u.unresolvablePromise()
 
-    target = bestOldSelector(selectorOrElement, u.merge(options, humanized: 'target'))
-    failTarget = bestOldSelector(options.failTarget, u.merge(options, humanized: 'failure target'))
+    options.inspectResponse = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
+
+    successOptions = u.merge options,
+      humanizedTarget: 'target'
+
+    failureOptions = u.merge options,
+      humanizedTarget: 'failure target'
+      provideTarget: undefined # don't provide a target if we're targeting the failTarget
+
+    target = bestOldSelector(selectorOrElement, successOptions)
+    failTarget = bestOldSelector(options.failTarget, failureOptions)
 
     console.debug("Best target is %o", target)
     console.debug("Best failTarget is %o", failTarget)
@@ -238,11 +247,10 @@ up.flow = (($) ->
       preload: options.preload
       headers: options.headers
 
-    options.inspectResponse = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
-
     onSuccess = (html, textStatus, xhr) ->
       processResponse(true, target, url, request, xhr, options)
     onFailure = (xhr, textStatus, errorThrown) ->
+      options.provideTarget = undefined
       processResponse(false, failTarget, url, request, xhr, options)
 
     promise = up.ajax(request)
@@ -367,29 +375,13 @@ up.flow = (($) ->
       $.when(swapPromises...)
 
   bestOldSelector = (selector, options) ->
-    console.debug("bestOldSelector for %o / %o", selector, options)
-    candidates = targetCandidates(selector, options)
-    cascade = new up.flow.ExtractCascade(candidates, options)
-    selector = cascade.bestOldSelector()
-    resolveSelector(selector, options.origin)
+    cascade = new up.flow.ExtractCascade(selector, options)
+    cascade.bestOldSelector()
 
   bestMatchingSteps = (selector, response, options) ->
-    candidates = targetCandidates(selector, options)
     options = u.merge(options, response: response)
-    cascade = new up.flow.ExtractCascade(candidates, options)
+    cascade = new up.flow.ExtractCascade(selector, options)
     cascade.bestMatchingSteps()
-
-  targetCandidates = (selector, options) ->
-    candidates = [selector, options.fallback, config.fallbacks]
-    candidates = u.flatten(candidates)
-    # Remove undefined, null and false
-    candidates = u.select candidates, u.isTruthy
-
-    if options.fallback == false || options.provideTarget
-      # Use the first defined candidate, but not `selector` since that
-      # might be an undefined options.failTarget
-      candidates = [candidates[0]]
-    candidates
 
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)
