@@ -236,14 +236,15 @@ up.flow = (($) ->
       cache: options.cache
       preload: options.preload
       headers: options.headers
-      
+
     options.inspectResponse = -> up.browser.loadPage(url, u.only(options, 'method', 'data'))
 
-    promise = up.ajax(request)
     onSuccess = (html, textStatus, xhr) ->
       processResponse(true, target, url, request, xhr, options)
     onFailure = (xhr, textStatus, errorThrown) ->
       processResponse(false, failTarget, url, request, xhr, options)
+
+    promise = up.ajax(request)
     promise = promise.then(onSuccess, onFailure)
     promise
 
@@ -352,7 +353,7 @@ up.flow = (($) ->
       promise
 
   doSwap = (selectorOrElement, html, options) ->
-    response = parseResponse(html, options)
+    response = parseResponse(html)
     implantSteps = bestMatchingSteps(selectorOrElement, response, options)
 
     options.title = response.title() if shouldExtractTitle(options)
@@ -390,7 +391,8 @@ up.flow = (($) ->
       unless (isLinked && runLinkedScripts) || (isInline && runInlineScripts)
         $script.remove()
 
-  parseResponse = (html, options) ->
+  parseResponse = (html) ->
+    console.debug("Parse response from HTML: %o", html)
     # jQuery cannot construct transient elements that contain <html> or <body> tags
     htmlElement = u.createElementFromHtml(html)
     title: -> htmlElement.querySelector("title")?.textContent
@@ -400,7 +402,9 @@ up.flow = (($) ->
       # jQuery.find is the Sizzle function (https://github.com/jquery/sizzle/wiki#public-api)
       # which gives us non-standard CSS selectors such as `:has`.
       # It returns an array of DOM elements, NOT a jQuery collection.
+      console.debug("Response firsting selector %o", selector)
       if child = $.find(selector, htmlElement)[0]
+        console.debug("Response found child: %o", child)
         $(child)
 
   updateHistory = (options) ->

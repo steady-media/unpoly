@@ -15,7 +15,7 @@ class up.flow.ExtractPlan
 
   findNew: =>
     u.each @steps, (step) =>
-      step.$new = @response.first(step)
+      step.$new = @response.first(step.selector)
 
   oldExists: =>
     @findOld()

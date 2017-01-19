@@ -14,25 +14,45 @@ class up.flow.ExtractCascade
       console.debug("planOptions are %o", planOptions)
       new up.flow.ExtractPlan(candidate, planOptions)
 
+  oldPlan: =>
+    @detectPlan('oldExists')
+
+  newPlan: =>
+    @detectPlan('newExists')
+
+  matchingPlan: =>
+    @detectPlan('matchExists')
+
+  detectPlan: (checker) =>
+    u.detect @plans, (plan) -> plan[checker]()
+
   bestOldSelector: =>
-    for plan in @plans
-      if plan.oldExists()
-        return plan.selector
-    @oldPlanNotFound()
+    if plan = @oldPlan()
+      plan.selector
+    else
+      @oldPlanNotFound()
+
+  bestMatchingSteps: =>
+    if plan = @matchingPlan()
+      console.debug("!!! Found matching plan %o", plan)
+      plan.steps
+    else
+      @matchingPlanNotFound()
+
+  matchingPlanNotFound: =>
+    if @newPlan()
+      @oldPlanNotFound()
+    else
+      if @oldPlan()
+        message = "Could not find #{@humanized} in response"
+      else
+        message = "Could not match #{@humanized} in current page and response"
+      if @response && @options.inspectResponse
+        inspectAction = { label: 'Open response', callback: @options.inspectResponse }
+      up.fail(["#{message} (tried %o)", @candidates], action: inspectAction)
 
   oldPlanNotFound: =>
     layerProse = @options.layer
     layerProse = 'page, modal or popup' if layerProse == 'auto'
-    up.fail("Could not find #{@options.humanized} in the current #{layerProse} (tried %o)", @candidates)
+    up.fail("Could not find #{@options.humanized} in current #{layerProse} (tried %o)", @candidates)
 
-  bestMatchingSteps: =>
-    matchingPlan = u.detect @plans, (plan) -> plan.matchExists()
-    if matchingPlan
-      return matchingPlan.steps
-    @matchingPlanNotFound()
-
-  matchingPlanNotFound: =>
-    message = "Could not match targets in current page and response"
-    if @options.inspectResponse
-      inspectAction = { label: 'Open response', callback: @options.inspectResponse }
-    up.fail(["#{message} (tried %o)", @candidates], action: inspectAction)

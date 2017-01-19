@@ -18,6 +18,12 @@ up.util = (($) ->
   noop = $.noop
 
   ###*
+  Ensures that the given function can only be called a single time.
+  Subsequent calls will return the return value of the first call.
+
+  Note that this is a simple implementation that
+  doesn't distinguish between argument lists.
+
   @function up.util.memoize
   @internal
   ###
