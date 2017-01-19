@@ -10,6 +10,7 @@ class up.flow.ExtractPlan
     @steps = @parseSteps()
 
   findOld: =>
+    console.debug("Finding old %o, first step is %o, up.first says %o", @selector, @steps[0], up.flow.first(@steps[0].selector, @options))
     u.each @steps, (step) ->
       step.$old = up.flow.first(step.selector, @options)
 
@@ -40,13 +41,14 @@ class up.flow.ExtractPlan
   ###
   parseSteps: =>
     console.debug("Resolving selector %o", @selector)
-    resolvedSelector = up.flow.resolveSelector(@selector, @origin)
     if u.isString(@transition)
       transitions = @transition.split(comma)
     else
       transitions = [@transition]
 
     comma = /\ *,\ */
+
+    resolvedSelector = up.flow.resolveSelector(@selector, @origin)
     disjunction = resolvedSelector.split(comma)
 
     u.map disjunction, (literal, i) ->

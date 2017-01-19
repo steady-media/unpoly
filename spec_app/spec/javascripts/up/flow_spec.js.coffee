@@ -362,34 +362,44 @@ describe 'up.flow', ->
 
           describe 'when selectors are missing on the page before the request was made', ->
 
-            it 'tries selectors from options.fallbackTargets before making a request', ->
-              throw 'implement me'
-
-            it 'returns a rejected promise if all alternatives are exhausted', ->
-              throw 'implement me'
-
-            it 'considers a union selector to be missing if one of its selector-atoms are missing'
-
-          describe 'when selectors are missing on the page after the request was made', ->
-
-            it 'tries selectors from options.fallbackTargets before swapping elements', ->
+            it 'tries selectors from options.fallback before making a request', ->
               throw 'implement me'
 
             it 'returns a rejected promise if all alternatives are exhausted', ->
               throw 'implement me'
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
+              throw 'implement me'
+
+            it 'does not try a fallback selector of options.fallback is false', ->
+              throw 'implement me'
+
+          describe 'when selectors are missing on the page after the request was made', ->
+
+            it 'tries selectors from options.fallback before swapping elements', ->
+              throw 'implement me'
+
+            it 'returns a rejected promise if all alternatives are exhausted', ->
+              throw 'implement me'
+
+            it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
+              throw 'implement me'
+
+            it 'does not try a fallback selector of options.fallback is false', ->
               throw 'implement me'
 
           describe 'when selectors are missing in the response', ->
 
-            it 'tries selectors from options.fallbackTargets before swapping elements', ->
+            it 'tries selectors from options.fallback before swapping elements', ->
               throw 'implement me'
 
             it 'returns a rejected promise if all alternatives are exhausted', ->
               throw 'implement me'
 
             it 'considers a union selector to be missing if one of its selector-atoms are missing', ->
+              throw 'implement me'
+
+            it 'does not try a fallback selector of options.fallback is false', ->
               throw 'implement me'
 
         describe 'execution of script tags', ->

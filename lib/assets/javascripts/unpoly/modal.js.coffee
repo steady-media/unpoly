@@ -464,7 +464,7 @@ up.modal = (($) ->
         if options.history
           state.coveredUrl = up.browser.url()
           state.coveredTitle = document.title
-        options.beforeSwap = -> createFrame(target, options)
+        options.provideTarget = -> createFrame(target, options)
         extractOptions = u.merge(options, animation: false)
         if html
           promise = up.extract(target, html, extractOptions)

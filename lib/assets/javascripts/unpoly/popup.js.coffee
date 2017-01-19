@@ -251,7 +251,7 @@ up.popup = (($) ->
           state.coveredUrl = up.browser.url()
           state.coveredTitle = document.title
         state.sticky = options.sticky
-        options.beforeSwap = -> createFrame(target)
+        options.provideTarget = -> createFrame(target)
         extractOptions = u.merge(options, animation: false)
         if html
           promise = up.extract(target, html, extractOptions)

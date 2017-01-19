@@ -62,6 +62,7 @@ up.flow = (($) ->
   @internal
   ###
   resolveSelector = (selectorOrElement, origin) ->
+    console.debug("Resolving selector %o", selectorOrElement)
     if u.isString(selectorOrElement)
       selector = selectorOrElement
       if u.contains(selector, '&')
@@ -346,39 +347,49 @@ up.flow = (($) ->
 
       up.layout.saveScroll() unless options.saveScroll == false
 
-      promise = u.resolvedPromise()
-      promise = promise.then(options.beforeSwap) if options.beforeSwap
-      promise = promise.then -> doSwap(selectorOrElement, html, options)
-      promise = promise.then(options.afterSwap) if options.afterSwap
-      promise
+      # Allow callers to create the targeted element right before we swap.
+      options.provideTarget?()
+      response = parseResponse(html)
+      implantSteps = bestMatchingSteps(selectorOrElement, response, options)
 
-  doSwap = (selectorOrElement, html, options) ->
-    response = parseResponse(html)
-    implantSteps = bestMatchingSteps(selectorOrElement, response, options)
+      options.title = response.title() if shouldExtractTitle(options)
+      updateHistory(options)
 
-    options.title = response.title() if shouldExtractTitle(options)
-    updateHistory(options)
+      swapPromises = []
+      for step in implantSteps
+        up.log.group 'Updating %s', step.selector, ->
+          filterScripts(step.$new, options)
+          swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
+          swapPromises.push(swapPromise)
+          options.reveal = false # only reveal the first selector atom in the union
 
-    swapPromises = []
-    for step in implantSteps
-      up.log.group 'Updating %s', step.selector, ->
-        filterScripts(step.$new, options)
-        swapPromise = swapElements(step.$old, step.$new, step.pseudoClass, step.transition, options)
-        swapPromises.push(swapPromise)
-        options.reveal = false # only reveal the first selector atom in the union
-    # Delay all further links in the promise chain until all fragments have been swapped
-    return $.when(swapPromises...)
+      # Delay all further links in the promise chain until all fragments have been swapped
+      $.when(swapPromises...)
 
   bestOldSelector = (selector, options) ->
-    candidates = [selector, options.fallback, config.fallbacks]
-    cascade = new up.flow.ExtractCascade(candidates, options)
-    cascade.bestOldSelector()
+    console.debug("bestOldSelector for %o / %o", selector, options)
+    candidates = targetCandidates(selector, options)
+    # up.modal and up.popup provide a function that creates a matching frame before swapping.
+    # In this case, don't fallback before a new request, we would probably just get <body>
+    unless options.provideTarget
+      cascade = new up.flow.ExtractCascade(candidates, options)
+      selector = cascade.bestOldSelector()
+    else
+      # We still need to find some selector in case we're asked for an undefined options.fallback
+      selector = candidates[0]
+    resolveSelector(selector, options.origin)
 
   bestMatchingSteps = (selector, response, options) ->
-    candidates = [selector, options.fallback, config.fallbacks]
+    candidates = targetCandidates(selector, options)
     options = u.merge(options, response: response)
     cascade = new up.flow.ExtractCascade(candidates, options)
     cascade.bestMatchingSteps()
+
+  targetCandidates = (selector, options) ->
+    if options.fallback == false
+      [selector]
+    else
+      u.simplifyArray [selector, options.fallback, config.fallbacks]
 
   filterScripts = ($element, options) ->
     runInlineScripts = u.option(options.runInlineScripts, config.runInlineScripts)
