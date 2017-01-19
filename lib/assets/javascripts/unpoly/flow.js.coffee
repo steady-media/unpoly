@@ -231,8 +231,8 @@ up.flow = (($) ->
       humanizedTarget: 'failure target'
       provideTarget: undefined # don't provide a target if we're targeting the failTarget
 
-    target = bestOldSelector(selectorOrElement, successOptions)
-    failTarget = bestOldSelector(options.failTarget, failureOptions)
+    target = bestPreflightSelector(selectorOrElement, successOptions)
+    failTarget = bestPreflightSelector(options.failTarget, failureOptions)
 
     console.debug("Best target is %o", target)
     console.debug("Best failTarget is %o", failTarget)
@@ -374,9 +374,9 @@ up.flow = (($) ->
       # Delay all further links in the promise chain until all fragments have been swapped
       $.when(swapPromises...)
 
-  bestOldSelector = (selector, options) ->
+  bestPreflightSelector = (selector, options) ->
     cascade = new up.flow.ExtractCascade(selector, options)
-    cascade.bestOldSelector()
+    cascade.bestPreflightSelector()
 
   bestMatchingSteps = (selector, response, options) ->
     options = u.merge(options, response: response)

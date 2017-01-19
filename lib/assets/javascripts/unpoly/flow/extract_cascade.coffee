@@ -36,7 +36,7 @@ class up.flow.ExtractCascade
   detectPlan: (checker) =>
     u.detect @plans, (plan) -> plan[checker]()
 
-  bestOldSelector: =>
+  bestPreflightSelector: =>
     if @options.provideTarget
       # We know that the target will be created before swapping,
       # so just return the first plan
