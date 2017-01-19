@@ -10,7 +10,6 @@ class up.flow.ExtractPlan
     @steps = @parseSteps()
 
   findOld: =>
-    console.debug("Finding old %o, first step is %o, up.first says %o", @selector, @steps[0], up.flow.first(@steps[0].selector, @options))
     u.each @steps, (step) ->
       step.$old = up.flow.first(step.selector, @options)
 

@@ -5,7 +5,6 @@ class up.flow.ExtractCascade
   constructor: (selector, options) ->
     @options = u.options(options, humanizedTarget: 'selector', layer: 'auto')
     @candidates = @buildCandidates(selector)
-    console.debug("ExtractCascade with candidates %o (%o)", @candidates, options)
     @plans = u.map @candidates, (candidate, i) =>
       planOptions = u.copy(@options)
       if i > 0
@@ -47,7 +46,6 @@ class up.flow.ExtractCascade
 
   bestMatchingSteps: =>
     if plan = @matchingPlan()
-      console.debug("!!! Found matching plan %o", plan)
       plan.steps
     else
       @matchingPlanNotFound()

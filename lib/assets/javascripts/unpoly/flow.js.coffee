@@ -230,13 +230,8 @@ up.flow = (($) ->
       humanizedTarget: 'failure target'
       provideTarget: undefined # don't provide a target if we're targeting the failTarget
 
-    console.debug('**** failureOptions are %o', failureOptions)
-
     target = bestPreflightSelector(selectorOrElement, successOptions)
     failTarget = bestPreflightSelector(options.failTarget, failureOptions)
-
-    console.debug("Best target is %o", target)
-    console.debug("Best failTarget is %o", failTarget)
 
     request =
       url: url
@@ -251,10 +246,8 @@ up.flow = (($) ->
     onSuccess = (html, textStatus, xhr) ->
       processResponse(true, target, url, request, xhr, successOptions)
     onFailure = (xhr, textStatus, errorThrown) ->
-      console.debug("************* on failure!")
       rejection = -> u.rejectedPromise(xhr, textStatus, errorThrown)
       promise = processResponse(false, failTarget, url, request, xhr, failureOptions)
-      console.debug('***** processResponse returned %o', promise)
       promise.then(rejection, rejection)
 
     promise = up.ajax(request)
@@ -303,14 +296,10 @@ up.flow = (($) ->
 
     options.title = u.titleFromXhr(xhr) if shouldExtractTitle(options)
 
-    console.debug("processResponse before extract")
-
     if options.preload
       u.resolvedPromise()
     else
-      promise = extract(selector, xhr.responseText, options)
-      console.debug("extract returned %o", promise)
-      promise
+      extract(selector, xhr.responseText, options)
 
   shouldExtractTitle = (options) ->
     not (options.title is false || u.isString(options.title) || (options.history is false && options.title isnt true))
@@ -363,8 +352,6 @@ up.flow = (($) ->
 
       up.layout.saveScroll() unless options.saveScroll == false
 
-      console.debug('*********** provideTarget: %o', options.provideTarget)
-
       # Allow callers to create the targeted element right before we swap.
       options.provideTarget?()
       response = parseResponse(html)
@@ -405,7 +392,6 @@ up.flow = (($) ->
         $script.remove()
 
   parseResponse = (html) ->
-    console.debug("Parse response from HTML: %o", html)
     # jQuery cannot construct transient elements that contain <html> or <body> tags
     htmlElement = u.createElementFromHtml(html)
     title: -> htmlElement.querySelector("title")?.textContent
@@ -415,9 +401,7 @@ up.flow = (($) ->
       # jQuery.find is the Sizzle function (https://github.com/jquery/sizzle/wiki#public-api)
       # which gives us non-standard CSS selectors such as `:has`.
       # It returns an array of DOM elements, NOT a jQuery collection.
-      console.debug("Response firsting selector %o", selector)
       if child = $.find(selector, htmlElement)[0]
-        console.debug("Response found child: %o", child)
         $(child)
 
   updateHistory = (options) ->
