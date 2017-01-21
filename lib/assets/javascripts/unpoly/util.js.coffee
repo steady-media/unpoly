@@ -1815,6 +1815,20 @@ up.util = (($) ->
       $ -> deferred.resolve()
       deferred.promise()
 
+  eagerAsync = (func) ->
+    (args...) ->
+      lastArg = last(args)
+      if isFunction(lastArg)
+        callback = args.pop()
+        result = func(args...)
+        if u.isResolvedPromise()
+          callback()
+        else
+          result = result.then(callback)
+        result
+      else
+        func(args...)
+
   identity = (arg) -> arg
 
   ###*
