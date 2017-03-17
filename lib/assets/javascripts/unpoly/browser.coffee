@@ -75,12 +75,7 @@ up.browser = (($) ->
   @internal
   ###
   puts = (stream, args...) ->
-    if canLogSubstitution()
-      console[stream](args...)
-    else
-      # IE <= 9 cannot pass varargs to console.log using Function#apply because IE
-      message = sprintf(args...)
-      console[stream](message)
+    console[stream](args...)
 
   CONSOLE_PLACEHOLDERS = /\%[odisf]/g
 
@@ -146,13 +141,8 @@ up.browser = (($) ->
   url = ->
     location.href
 
-  isIE8OrWorse = u.memoize ->
-    # This is the most concise way to exclude IE8 and lower
-    # while keeping all relevant desktop and mobile browsers.
-    u.isUndefined(document.addEventListener)
-
-  isIE9OrWorse = u.memoize ->
-    isIE8OrWorse() || navigator.appVersion.indexOf('MSIE 9.') != -1
+  isIE10OrWorse = u.memoize ->
+    !window.atob
 
   ###*
   Returns whether this browser supports manipulation of the current URL
@@ -233,20 +223,21 @@ up.browser = (($) ->
     !!window.DOMParser
 
   ###*
-  Returns whether this browser supports
-  [string substitution](https://developer.mozilla.org/en-US/docs/Web/API/console#Using_string_substitutions)
-  in `console` functions.
+  Returns whether this browser supports the [`debugging console`](https://developer.mozilla.org/en-US/docs/Web/API/Console).
 
-  \#\#\# Example for string substition
-
-      console.log("Hello %o!", "Judy");
-
-  @function up.browser.canLogSubstitution
+  @function up.browser.canConsole
   @return {Boolean}
-  @internal
+  @experimental
   ###
-  canLogSubstitution = u.memoize ->
-    !isIE9OrWorse()
+  canConsole = u.memoize ->
+    !!window.console &&
+      console.debug &&
+      console.info &&
+      console.warn &&
+      console.error &&
+      console.group &&
+      console.groupCollapsed &&
+      console.groupEnd
 
   isRecentJQuery = u.memoize ->
     version = $.fn.jquery
@@ -301,16 +292,7 @@ up.browser = (($) ->
   @stable
   ###
   isSupported = ->
-    canDomParser() && isRecentJQuery()
-
-  ###*
-  @internal
-  ###
-  installPolyfills = ->
-    window.console ?= {} # Missing in IE9 with DevTools closed
-    for method in ['debug', 'info', 'warn', 'error', 'group', 'groupCollapsed', 'groupEnd']
-      console[method] ?= (args...) -> puts('log', args...)
-    console.log ?= u.noop # Cannot be faked
+    canConsole() && isRecentJQuery() && canPushState() && canDomParser() && canFormData()
 
   ###*
   @internal
@@ -342,9 +324,8 @@ up.browser = (($) ->
   canInputEvent: canInputEvent
   canFormData: canFormData
   canDomParser: canDomParser
-  canLogSubstitution: canLogSubstitution
+  canConsole: canConsole
   isSupported: isSupported
-  installPolyfills: installPolyfills
   puts: puts
   sprintf: sprintf
   sprintfWithFormattedArgs: sprintfWithFormattedArgs

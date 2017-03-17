@@ -437,7 +437,6 @@ up.bus = (($) ->
     if up.browser.isSupported()
       # Can't decouple this via the event bus, since up.bus would require
       # up.browser.isSupported() and up.browser would require up.on()
-      up.browser.installPolyfills()
       emit('up:framework:boot', message: 'Booting framework')
       emit('up:framework:booted', message: 'Framework booted')
       # User-provided compiler definitions will be registered once this function terminates.
