@@ -99,14 +99,12 @@ describe 'up.dom', ->
             up.replace('.middle', '/bar')
             expect(jasmine.Ajax.requests.count()).toEqual(2)
 
-          describeCapability 'canFormData', ->
-
-            it "does not explode if the original request's { data } is a FormData object", ->
-              up.replace('.middle', '/foo', method: 'post', data: new FormData()) # POST requests are not cached
-              expect(jasmine.Ajax.requests.count()).toEqual(1)
-              @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
-              secondReplace = -> up.replace('.middle', '/bar')
-              expect(secondReplace).not.toThrowError()
+          it "does not explode if the original request's { data } is a FormData object", ->
+            up.replace('.middle', '/foo', method: 'post', data: new FormData()) # POST requests are not cached
+            expect(jasmine.Ajax.requests.count()).toEqual(1)
+            @respond(responseHeaders: { 'X-Up-Location': '/bar', 'X-Up-Method': 'GET' })
+            secondReplace = -> up.replace('.middle', '/bar')
+            expect(secondReplace).not.toThrowError()
 
         describe 'with { data } option', ->
 

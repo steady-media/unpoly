@@ -518,7 +518,7 @@ up.util = (($) ->
   @internal
   ###
   isFormData = (object) ->
-    up.browser.canFormData() && object instanceof FormData
+    object instanceof FormData
 
   ###*
   Converts the given array-like argument into an array.
@@ -1654,21 +1654,6 @@ up.util = (($) ->
       ""
 
   ###*
-  Serializes the given form into a request data representation.
-
-  @function up.util.requestDataFromForm
-  @return {Array|FormData}
-  @internal
-  ###
-  requestDataFromForm = (form) ->
-    $form = $(form)
-    hasFileInputs = $form.find('input[type=file]').length
-    if hasFileInputs && up.browser.canFormData()
-      new FormData($form.get(0))
-    else
-      $form.serializeArray()
-
-  ###*
   Adds a key/value pair to the given request data representation.
 
   This mutates the given `data` if `data` is a `FormData`, an object
@@ -1959,7 +1944,6 @@ up.util = (($) ->
   requestDataAsArray: requestDataAsArray
   requestDataAsQuery: requestDataAsQuery
   appendRequestData: appendRequestData
-  requestDataFromForm: requestDataFromForm
   offsetParent: offsetParent
   fixedToAbsolute: fixedToAbsolute
   isFixed: isFixed

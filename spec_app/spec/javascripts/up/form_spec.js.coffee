@@ -268,8 +268,8 @@ describe 'up.form', ->
         it 'submits the given form and replaces the target with the response', ->
           expect(@request.url).toMatch /\/path\/to$/
           expect(@request).toHaveRequestMethod('PUT')
-          expect(@request.data()['field1']).toEqual(['value1'])
-          expect(@request.data()['field2']).toEqual(['value2'])
+          expect(@request.data().get('field1')).toEqual('value1')
+          expect(@request.data().get('field2')).toEqual('value2')
           expect(@request.requestHeaders['X-Up-Target']).toEqual('.response')
 
           @respondWith """
@@ -342,20 +342,10 @@ describe 'up.form', ->
           beforeEach ->
             @$form.affix('input[name="file-field"][type="file"]')
 
-          describeCapability 'canFormData', ->
-
-            it 'transfers the form fields via FormData', ->
-              up.submit(@$form)
-              data = @lastRequest().data()
-              expect(u.isFormData(data)).toBe(true)
-
-          describeFallback 'canFormData', ->
-
-            it 'falls back to a vanilla form submission', ->
-              form = @$form.get(0)
-              spyOn(form, 'submit')
-              up.submit(@$form)
-              expect(form.submit).toHaveBeenCalled()
+          it 'transfers the form fields via FormData', ->
+            up.submit(@$form)
+            data = @lastRequest().data()
+            expect(u.isFormData(data)).toBe(true)
 
       describeFallback 'canPushState', ->
 

@@ -131,7 +131,7 @@ up.form = (($) ->
     options.restoreScroll = u.option(options.restoreScroll, u.castedAttr($form, 'up-restore-scroll'))
     options.origin = u.option(options.origin, $form)
     options.layer = u.option(options.layer, $form.attr('up-layer'), 'auto')
-    options.data = up.util.requestDataFromForm($form)
+    options.data = new FormData($form.get(0))
     options = u.merge(options, up.motion.animateOptions(options, $form))
 
     hasFileInputs = $form.find('input[type=file]').length
