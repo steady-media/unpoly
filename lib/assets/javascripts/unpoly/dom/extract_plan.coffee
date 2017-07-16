@@ -12,8 +12,6 @@ class up.dom.ExtractPlan
 
   findOld: =>
     u.each @steps, (step) =>
-      console.debug("Finding old with %s, %o", step.selector, layer: @oldLayer)
-      console.debug("Result is %s", up.dom.first(step.selector, layer: @oldLayer).text())
       step.$old = up.dom.first(step.selector, layer: @oldLayer)
 
   findNew: =>

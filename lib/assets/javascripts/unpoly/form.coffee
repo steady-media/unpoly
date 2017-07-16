@@ -112,10 +112,7 @@ up.form = (($) ->
     The name of the layer that ought to be updated. Valid values are
     `auto`, `page`, `modal` and `popup`.
 
-    If set to `auto` (default), Unpoly will try to find a match in the
-    same layer as the element that triggered the replacement (see `options.origin`).
-    If that element is not known, or no match was found in that layer,
-    Unpoly will search in other layers, starting from the topmost layer.
+    If set to `auto` (default), Unpoly will try to find a match in the form's layer.
   @param {String} [options.failLayer='auto']
     The name of the layer that ought to be updated if the server sends a non-200 status code.
   @return {Promise}
@@ -550,6 +547,16 @@ up.form = (($) ->
     Alternately you can use an attribute `data-method`
     ([Rails UJS](https://github.com/rails/jquery-ujs/wiki/Unobtrusive-scripting-support-for-jQuery))
     or `method` (vanilla HTML) for the same purpose.
+  @param {String} [up-layer='auto']
+    The name of the layer that ought to be updated. Valid values are
+    `auto`, `page`, `modal` and `popup`.
+
+    If set to `auto` (default), Unpoly will try to find a match in the form's layer.
+    If no match was found in that layer,
+    Unpoly will search in other layers, starting from the topmost layer.
+  @param {String} [up-fail-layer='auto']
+    The name of the layer that ought to be updated if the server sends a
+    non-200 status code.
   @param {String} [up-reveal='true']
     Whether to reveal the target element within its viewport before updating.
   @param {String} [up-restore-scroll='false']
