@@ -7,11 +7,14 @@ class up.dom.ExtractPlan
     @selector = up.dom.resolveSelector(selector, options.origin)
     @transition = options.transition || options.animation || 'none'
     @response = options.response
+    @oldLayer = options.layer
     @steps = @parseSteps()
 
   findOld: =>
-    u.each @steps, (step) ->
-      step.$old = up.dom.first(step.selector, @options)
+    u.each @steps, (step) =>
+      console.debug("Finding old with %s, %o", step.selector, layer: @oldLayer)
+      console.debug("Result is %s", up.dom.first(step.selector, layer: @oldLayer).text())
+      step.$old = up.dom.first(step.selector, layer: @oldLayer)
 
   findNew: =>
     u.each @steps, (step) =>

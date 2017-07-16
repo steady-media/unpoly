@@ -307,7 +307,7 @@ up.dom = (($) ->
         options.source  = 'keep' unless u.isString(options.source)
     else
       u.renameKey(options, 'failTransition', 'transition')
-      u.renameKey(options, 'failTarget', 'target')
+      u.renameKey(options, 'failLayer', 'layer')
       if isReloadable # e.g. GET returns 500 Internal Server Error
         options.history = url unless options.history is false
         options.source  = url unless options.source  is false

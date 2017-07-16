@@ -1775,8 +1775,8 @@ up.util = (($) ->
     delete object[key]
     value
 
-  renameKey = (object, oldName, newKey) ->
-    object[newName] = pluckKey(object, oldKey)
+  renameKey = (object, oldKey, newKey) ->
+    object[newKey] = pluckKey(object, oldKey)
 
   pluckData = (elementOrSelector, key) ->
     $element = $(elementOrSelector)
