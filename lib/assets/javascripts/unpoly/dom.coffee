@@ -222,6 +222,8 @@ up.dom = (($) ->
     same layer as the element that triggered the replacement (see `options.origin`).
     If that element is not known, or no match was found in that layer,
     Unpoly will search in other layers, starting from the topmost layer.
+  @param {String} [options.failLayer='auto']
+    The name of the layer that ought to be updated if the server sends a non-200 status code.
 
   @return {Promise}
     A promise that will be resolved when the page has been updated.
@@ -304,8 +306,8 @@ up.dom = (($) ->
         options.history = false  unless u.isString(options.history)
         options.source  = 'keep' unless u.isString(options.source)
     else
-      options.transition = options.failTransition
-      options.failTransition = undefined
+      u.renameKey(options, 'failTransition', 'transition')
+      u.renameKey(options, 'failTarget', 'target')
       if isReloadable # e.g. GET returns 500 Internal Server Error
         options.history = url unless options.history is false
         options.source  = url unless options.source  is false
@@ -750,6 +752,7 @@ up.dom = (($) ->
     $match = undefined
     if u.isPresent(origin)
       originLayer = layerOf(origin)
+      # Make the origin's layer the top priority
       u.remove(layers, originLayer)
       layers.unshift(originLayer)
     for layer in layers

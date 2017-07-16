@@ -180,6 +180,7 @@ up.link = (($) ->
     options.method = followMethod($link, options)
     options.origin = u.option(options.origin, $link)
     options.layer = u.option(options.layer, $link.attr('up-layer'), 'auto')
+    options.failLayer = u.option(options.failLayer, $link.attr('up-fail-layer'), 'auto')
     options.confirm = u.option(options.confirm, $link.attr('up-confirm'))
     options = u.merge(options, up.motion.animateOptions(options, $link))
 
