@@ -316,11 +316,16 @@ describe 'up.modal', ->
       describeCapability 'canPushState', ->
 
         it 'returns the URL behind the modal overlay', (done) ->
+          console.debug('replacing')
           up.history.replace('/foo')
+          console.debug('expect missing')
           expect(up.modal.coveredUrl()).toBeMissing()
+          console.debug('visiting')
           visitPromise = up.modal.visit('/bar', target: '.container')
+          console.debug('respond')
           @respondWith('<div class="container">text</div>')
           visitPromise.then ->
+            console.debug('promose resolved')
             expect(up.modal.coveredUrl()).toEqualUrl('/foo')
             up.modal.close().then ->
               expect(up.modal.coveredUrl()).toBeMissing()
