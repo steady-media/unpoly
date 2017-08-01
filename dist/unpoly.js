@@ -5260,7 +5260,11 @@ Unpoly will automatically be aware of sticky Bootstrap components such as
           var $viewport, key, scrollTop;
           $viewport = $(this);
           key = scrollTopKey($viewport);
-          scrollTop = scrollTopsForUrl[key] || 0;
+          if (typeof scrollTopsForUrl != 'undefined') {
+            scrollTop = scrollTopsForUrl[key] || 0;
+          } else {
+            scrollTop = 0;
+          }
           return scroll($viewport, scrollTop, {
             duration: 0
           });
